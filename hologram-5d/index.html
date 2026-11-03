@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ship 5D Hologram</title>
+<style>
+body{margin:0;background:#000a14;color:#00ffff;font-family:monospace;overflow:hidden}
+#top{position:absolute;top:10px;left:10px;background:rgba(0,255,255,0.1);padding:10px;border:1px solid #00ffff;z-index:10}
+#info{position:absolute;bottom:20px;right:10px;background:rgba(0,255,255,0.15);padding:12px;border:1px solid #00ffff;width:270px;display:none;z-index:10}
+canvas{display:block}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="top">🚢 SHIP-BOM-HOLOGRAM-5D<br>Drag=Rotate | Scroll=Zoom | Click=Explode</div>
+<div id="info"></div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x000a14,20,90);
+const camera=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,0.1,1000);
+camera.position.set(15,8,15);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+
+const grid=new THREE.GridHelper(80,40,0x00ffff,0x003333);
+scene.add(grid);
+
+const parts=[];
+function addBox(name,pos,color){
+  const geo=new THREE.BoxGeometry(2,0.8,4);
+  const mat=new THREE.MeshBasicMaterial({color,wireframe:true,transparent:true,opacity:0.7});
+  const m=new THREE.Mesh(geo,mat);
+  m.position.set(pos.x,pos.y,pos.z);
+  m.userData={name,orig:pos.clone()};
+  scene.add(m); parts.push(m);
+}
+addBox("Keel Plate - Bottom",{x:0,y:-2,z:0},0x00ffaa);
+addBox("Anchor 13T - Bow",{x:0,y:1,z:18},0x00ffff);
+addBox("Main Engine - Stern",{x:0,y:0,z:-15},0xffaa00);
+addBox("Top Mast - Bridge",{x:0,y:6,z:0},0xaaaaff);
+addBox("M6 Screws x10000",{x:6,y:0,z:0},0xffffff);
+addBox("Propeller & Shaft",{x:0,y:-1,z:-20},0xff00ff);
+
+const ray=new THREE.Raycaster();
+const mouse=new THREE.Vector2();
+let last=null;
+
+addEventListener('click',e=>{
+  mouse.x=(e.clientX/innerWidth)*2-1;
+  mouse.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(parts);
+  if(hit.length){
+    const o=hit[0].object;
+    const inf=document.getElementById('info');
+    inf.style.display='block';
+    inf.innerHTML=`<b>${o.userData.name}</b><br><br>Exploded Parts:<br>- Body<br>- Shackle<br>- M20 Bolt x50<br>- Washer<br>- Pin<br><br>Price: See MASTER_DATA<br><br><i>Again click to reset</i>`;
+    if(last){
+      last.position.copy(last.userData.orig);
+    }
+    if(last!==o){
+      o.position.y+=4; o.position.x+=4;
+      last=o;
+    } else { last=null; inf.style.display='none'; }
+  }
+});
+
+function loop(){requestAnimationFrame(loop);controls.update();renderer.render(scene,camera);}
+loop();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>
