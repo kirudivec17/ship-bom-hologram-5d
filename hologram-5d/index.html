@@ -2,188 +2,159 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>REAL SHIP HOLOGRAM - CENTERED</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHIP 5D - FIXED CAMERA LEGO BUILD</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#000510;color:#0ff;font-family:monospace;overflow:hidden;height:100dvh;display:flex;flex-direction:column}
-header{background:#001122;border-bottom:2px solid #0ff;padding:8px;display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap}
-header button{border:1px solid #0ff;background:#002040;color:#0ff;padding:8px 12px;white-space:nowrap;font-size:11px}
+body{background:#000510;color:#0ff;font-family:monospace;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+header{background:#001122;border-bottom:2px solid #0ff;padding:8px;display:flex;gap:6px;overflow-x:auto}
+header button{border:1px solid #0ff;background:#002040;color:#0ff;padding:8px 10px;white-space:nowrap;font-size:11px}
 header button.active{background:#0ff;color:#000}
-#main{flex:1;display:flex;min-height:0;position:relative}
-#left{width:220px;background:#001122;border-right:2px solid #0ff;padding:10px;overflow-y:auto}
+#main{flex:1;display:flex;min-height:0}
+#left{width:230px;background:#001122;border-right:2px solid #0ff;padding:10px;overflow-y:auto}
 #left h3{color:#fff;font-size:11px;margin:10px 0 6px}
 .stage{border:1px solid #0ff;padding:8px;margin-bottom:6px;font-size:11px;line-height:1.5;cursor:pointer}
 .stage.active{background:#0ff;color:#000}
-#viewport{flex:1;position:relative;background:radial-gradient(circle at center,#001a33 0%,#000 75%)}
+#vp{flex:1;position:relative;background:radial-gradient(circle at center,#001a33 0%,#000 80%)}
 canvas{display:block;width:100%!important;height:100%!important}
-#centerTag{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:1px dashed rgba(0,255,255,.3);width:90%;height:80%;pointer-events:none;display:none}
-#hud{position:absolute;left:10px;bottom:10px;background:rgba(0,20,40,.92);border:1px solid #0ff;padding:10px;font-size:11px;line-height:1.6;max-width:92%}
-#vesselInfo{position:absolute;right:10px;top:10px;background:rgba(0,20,40,.92);border:1px solid #0ff;padding:8px;font-size:11px;text-align:right}
+#hud{position:absolute;left:10px;bottom:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:10px;font-size:11px;line-height:1.6;max-width:92%}
+#vinfo{position:absolute;right:10px;top:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:8px;font-size:11px;text-align:right}
+#waterTag{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#0066ff;color:#fff;padding:6px 12px;font-size:11px;display:none}
 #footer{background:#001122;border-top:2px solid #0ff;padding:10px}
 #footer input{width:100%;accent-color:#0ff}
-#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#001122;border:1px solid #0ff;padding:15px;text-align:center;z-index:99}
-@media(max-width:768px){#left{position:absolute;left:0;top:0;bottom:0;z-index:20;width:200px;transform:translateX(-100%);transition:.3s}#left.open{transform:none}#viewport{width:100%}#menuBtn{display:block!important}}
+@media(max-width:768px){#left{position:absolute;z-index:20;width:200px;left:0;top:0;bottom:0;transform:translateX(-100%);transition:.3s}#left.open{transform:none}}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
 <header>
-<button id="menuBtn" style="display:none" onclick="document.getElementById('left').classList.toggle('open')">☰ MENU</button>
-<button onclick="setVessel('container')" class="vbtn active">CONTAINER</button>
-<button onclick="setVessel('bulk')" class="vbtn">BULK CARRIER</button>
-<button onclick="setVessel('tanker')" class="vbtn">OIL TANKER</button>
-<button onclick="setVessel('lng')" class="vbtn">LNG</button>
-<button onclick="setVessel('roro')" class="vbtn">RO-RO</button>
-<button onclick="setVessel('cruise')" class="vbtn">CRUISE</button>
+<button onclick="document.getElementById('left').classList.toggle('open')">☰ MENU</button>
+<button onclick="setVessel('CONTAINER')" class="vbtn active">CONTAINER</button>
+<button onclick="setVessel('BULK')" class="vbtn">BULK</button>
+<button onclick="setVessel('TANKER')" class="vbtn">TANKER</button>
+<button onclick="setVessel('LNG')" class="vbtn">LNG</button>
+<button onclick="setVessel('RORO')" class="vbtn">RO-RO</button>
+<button onclick="setVessel('CRUISE')" class="vbtn">CRUISE</button>
+<button onclick="toggleCut()">✂️ CUTAWAY</button>
 <button onclick="toggleWire()">WIREFRAME</button>
-<button onclick="toggleCut()">CUTAWAY</button>
-<button onclick="playBuild()">▶️ PLAY BUILD</button>
+<button onclick="playBuild()">▶️ PLAY FULL BUILD - LEGO</button>
+<button onclick="floatOut()">🌊 FLOAT-OUT</button>
 </header>
 <div id="main">
-<div id="left">
-<h3>5 BLOCKS - REAL SHIP</h3>
-<div id="blockList"></div>
-<h3>BUILD SEQUENCE - KEEL TO DELIVERY</h3>
-<div id="stageList"></div>
+<div id="left"><h3>5 BLOCKS - LEGO STYLE</h3><div id="blockList"></div><h3>BUILD SEQUENCE</h3><div id="stageList"></div></div>
+<div id="vp"><div id="waterTag">🌊 DRY DOCK FLOODING... SHIP FLOATING!</div><div id="vinfo">CONTAINER<br>LOA 200m | BEAM 32.2m<br>FIXED CAMERA: SIDE VIEW</div><div id="hud">Loading...</div></div>
 </div>
-<div id="viewport">
-<div id="loading">🚢 REAL SHIP MODEL LOADING...<br>GLB Hologram Engine<br>Please wait 5 sec</div>
-<div id="centerTag"></div>
-<div id="vesselInfo">CONTAINER VESSEL<br>LOA 200m | BEAM 32.2m<br>DRAFT 12.5m</div>
-<div id="hud">CENTERED HOLOGRAM<br>Drag to Rotate | Pinch to Zoom<br>Ship is now in CENTRE</div>
-</div>
-</div>
-<div id="footer"><div style="display:flex;justify-content:space-between;font-size:10px"><span>KEEL</span><span id="stageTxt">STAGE 0: KEEL</span><span>DELIVERY</span></div><input type="range" id="slider" min="0" max="10" value="0"></div>
+<div id="footer"><div style="display:flex;justify-content:space-between;font-size:10px"><span>STEEL CUTTING</span><span id="stageTxt">STAGE 0</span><span>DELIVERY</span></div><input type="range" id="slider" min="0" max="12" value="0"></div>
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-let scene,camera,renderer,controls,shipGroup,realShip,cut=false,wire=false,curStage=0,curVessel='container';
-scene=new THREE.Scene();
-scene.background=new THREE.Color(0x000510);
-// CENTER FIX - Camera bilkul centre pe
-let vp=document.getElementById('viewport');
-camera=new THREE.PerspectiveCamera(45, vp.clientWidth/vp.clientHeight, 0.1, 500);
-camera.position.set(0, 2, 12); // Bilkul centre ke samne
-camera.lookAt(0,0,0);
-renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-renderer.setSize(vp.clientWidth, vp.clientHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-vp.appendChild(renderer.domElement);
-
-// REAL LIGHTING - Real jaisa lagega, cartoon nahi
-scene.add(new THREE.AmbientLight(0x88ccff, 0.8));
-let sun=new THREE.DirectionalLight(0xffffff,2.5); sun.position.set(10,15,10); scene.add(sun);
-let rim=new THREE.DirectionalLight(0x00ffff,1.5); rim.position.set(-10,5,-10); scene.add(rim);
+let scene,camera,renderer,controls,ship,craneHook,water,cut=false,wire=false,curStage=0,curVessel='CONTAINER',animating=false;
+let vp=document.getElementById('vp');
+scene=new THREE.Scene(); scene.background=new THREE.Color(0x000510);
+// FIXED CAMERA - YouTube jaisa, hilta nahi, side se, thoda upar se
+camera=new THREE.PerspectiveCamera(42, vp.clientWidth/vp.clientHeight, 0.1, 500);
+camera.position.set(0, 3.5, 13.5); camera.lookAt(0,0,0);
+renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(vp.clientWidth,vp.clientHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.toneMapping=THREE.ACESFilmicToneMapping; vp.appendChild(renderer.domElement);
+scene.add(new THREE.AmbientLight(0x88ccff,0.9));
+let sun=new THREE.DirectionalLight(0xffffff,2.2); sun.position.set(8,15,10); scene.add(sun);
+let rim=new THREE.DirectionalLight(0x00ffff,1.2); rim.position.set(-10,5,-10); scene.add(rim);
 let grid=new THREE.GridHelper(40,40,0x004466,0x001122); grid.position.y=-2.2; scene.add(grid);
-// Reflection floor - Photo jaisa chamak
-let floor=new THREE.Mesh(new THREE.CircleGeometry(8,64), new THREE.MeshBasicMaterial({color:0x001133,transparent:true,opacity:0.4}));
-floor.rotation.x=-Math.PI/2; floor.position.y=-2.19; scene.add(floor);
+// DRY DOCK WALLS - YouTube wala dock
+let dockMat=new THREE.MeshStandardMaterial({color:0x555555,roughness:0.9});
+let dockL=new THREE.Mesh(new THREE.BoxGeometry(0.5,3,18),dockMat); dockL.position.set(-5,-1,0); scene.add(dockL);
+let dockR=new THREE.Mesh(new THREE.BoxGeometry(0.5,3,18),dockMat); dockR.position.set(5,-1,0); scene.add(dockR);
+// GANTRY CRANE - Red White - YouTube jaisa
+let crane=new THREE.Group();
+let cMat=new THREE.MeshStandardMaterial({color:0xff2200,metalness:0.6,roughness:0.4});
+let cMatW=new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.4,roughness:0.5});
+let leg1=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4),cMat); leg1.position.set(-4.5,1,0); crane.add(leg1);
+let leg2=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4),cMat); leg2.position.set(4.5,1,0); crane.add(leg2);
+let beam=new THREE.Mesh(new THREE.BoxGeometry(9.5,0.6,0.6),cMatW); beam.position.set(0,4.2,0); crane.add(beam);
+let hookMat=new THREE.MeshStandardMaterial({color:0xffff00});
+craneHook=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3),hookMat); craneHook.position.set(0,3.8,0); crane.add(craneHook);
+let cable=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1,6),new THREE.MeshBasicMaterial({color:0xffffff})); cable.position.set(0,3.8,0); crane.add(cable);
+scene.add(crane);
+// WATER - Float-Out ke liye, shuru me neeche
+water=new THREE.Mesh(new THREE.BoxGeometry(9.5,0.1,17), new THREE.MeshStandardMaterial({color:0x0066ff,transparent:true,opacity:0.7})); water.position.set(0,-2.15,0); scene.add(water);
+// SPARKS - Welding sparks
+let sparks=[];
+for(let i=0;i<40;i++){ let s=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), new THREE.MeshBasicMaterial({color:0xffaa00})); s.position.set((Math.random()-0.5)*10,-1.5,(Math.random()-0.5)*2); scene.add(s); sparks.push(s); }
 
-controls=new OrbitControls(camera, renderer.domElement);
-controls.target.set(0,0,0); // YEHI CENTRE FIX HAI - Target 0,0,0
-controls.enableDamping=true; controls.minDistance=4; controls.maxDistance=20;
-controls.update();
-
-shipGroup=new THREE.Group(); scene.add(shipGroup);
-
-// --- REAL SHIP BUILDER - Box nahi, Real Hull Shape ---
-function createRealHull(color=0x0066cc){
-  let g=new THREE.Group();
-  // Hull - Extrude se asli shape, box nahi
-  let shape=new THREE.Shape();
-  shape.moveTo(-6,-0.5);
-  shape.lineTo(5,-0.5); shape.quadraticCurveTo(6.5,-0.3,6.8,0.2); // Bow pointed
-  shape.lineTo(6.2,1); shape.lineTo(-6,1); shape.quadraticCurveTo(-6.5,0,-6,-0.5);
-  let hullGeo=new THREE.ExtrudeGeometry(shape,{depth:1.6,bevelEnabled:true,bevelThickness:0.15,bevelSize:0.15,bevelSegments:3});
-  let hullMat=new THREE.MeshStandardMaterial({color,metalness:0.7,roughness:0.3});
-  let hull=new THREE.Mesh(hullGeo,hullMat); hull.rotation.y=Math.PI/2; hull.position.set(0,0,-0.8);
-  // Wireframe overlay - Hologram feel
-  let wire=new THREE.LineSegments(new THREE.EdgesGeometry(hullGeo), new THREE.LineBasicMaterial({color:0x00ffff,transparent:true,opacity:0.4}));
-  wire.rotation.copy(hull.rotation); wire.position.copy(hull.position);
-  g.add(hull); g.add(wire);
-  return g;
-}
-function addRealPart(geo,mat,pos,rot=[0,0,0]){
-  let m=new THREE.Mesh(geo,mat); m.position.set(...pos); m.rotation.set(...rot); shipGroup.add(m);
-  let w=new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({color:0x00ffff,transparent:true,opacity:0.25}));
-  w.position.copy(m.position); w.rotation.copy(m.rotation); shipGroup.add(w); return m;
-}
-let steel=new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.8,roughness:0.35});
-let darkSteel=new THREE.MeshStandardMaterial({color:0x333333,metalness:0.8,roughness:0.4});
-let whiteMat=new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.3,roughness:0.5});
-let redMat=new THREE.MeshStandardMaterial({color:0xff2200,metalness:0.6,roughness:0.4});
+controls=new OrbitControls(camera,renderer.domElement); controls.target.set(0,0,0); controls.enableDamping=true; controls.minDistance=6; controls.maxDistance=18; controls.maxPolarAngle=Math.PI*0.55; controls.update();
+ship=new THREE.Group(); scene.add(ship);
 
 let stages=[
- {t:"0: KEEL LAYING",d:"Keel 200m - Backbone"},
- {t:"1: KEEL + FRAMES",d:"Frames - Skeleton"},
- {t:"2: HULL SIDE PLATES",d:"Hull Plates 18mm"},
- {t:"3: BULBOUS BOW",d:"Bow 2.8m - Drag -12%"},
- {t:"4: STERN + RUDDER + PROP",d:"Stern, Prop 5 Blade"},
- {t:"5: DOUBLE BOTTOM + TANKS",d:"Ballast / Fuel Tanks"},
- {t:"6: MAIN DECK + BULKHEADS",d:"Deck 40T/m2"},
- {t:"7: ACCOMMODATION",d:"Apartment 5 Floors"},
- {t:"8: ENGINE ROOM",d:"MAN 8000kW + Pipes"},
- {t:"9: BRIDGE + FUNNEL",d:"Wheelhouse"},
- {t:"10: CARGO + DELIVERY",d:"Final - Ready to Sail"},
+{t:"0: STEEL CUTTING",d:"CNC Plasma - 12,000 Plates -> 120,000 Pieces"},
+{t:"1: KEEL LAYING",d:"Keel 200m - First Block Dry Dock me"},
+{t:"2: FRAMES - SKELETON",d:"51 Frames, Spacing 2.5m, Honeycomb jaisa"},
+{t:"3: DOUBLE BOTTOM",d:"Ballast + Fuel Tanks - Neeche ka hissa"},
+{t:"4: HULL SIDE PLATES",d:"Side Plates 18mm - Crane se Block aaya"},
+{t:"5: BULBOUS BOW",d:"Bow 2.8m - Aage ka Block"},
+{t:"6: STERN + RUDDER + PROP",d:"Stern Block - Rudder, 5-Blade Prop"},
+{t:"7: MAIN DECK + BULKHEADS",d:"Deck 40T/m2, Watertight Bulkheads"},
+{t:"8: ENGINE ROOM",d:"MAN 8000kW - Engine Block Crane se"},
+{t:"9: ACCOMMODATION - LEGO",d:"5 Floors Apartment Block - Ek saath lift hua"},
+{t:"10: BRIDGE + FUNNEL",d:"Wheelhouse + Funnel"},
+{t:"11: CARGO",d:"Containers / Tanks / Cars - Vessel ke hisab se"},
+{t:"12: FLOAT-OUT + DELIVERY",d:"Dock me Paani - Ship Tair gaya!"},
 ];
+function mat(c,m=0.7,r=0.35){ return new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r}); }
+function addBox(w,h,d,pos,color,info){
+  let g=new THREE.BoxGeometry(w,h,d); let m=new THREE.Mesh(g,mat(color)); m.position.set(...pos); m.userData={info}; ship.add(m);
+  let e=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:0x00ffff,transparent:true,opacity:0.3})); e.position.copy(m.position); ship.add(e); return m;
+}
+function addCyl(rt,rb,h,pos,color,rot=[0,0,0]){ let m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,16),mat(color)); m.position.set(...pos); m.rotation.set(...rot); ship.add(m); return m; }
+function addSphere(r,pos,color){ let m=new THREE.Mesh(new THREE.SphereGeometry(r,20,20),mat(color)); m.position.set(...pos); ship.add(m); return m; }
 
-function build(stage){
-  shipGroup.clear();
-  // CENTER FIX - Ship ko hamesha 0,0,0 pe rakho
-  shipGroup.position.set(0,0,0);
-  shipGroup.rotation.set(0,0,0);
-  if(stage>=0){
-    // Keel - Real beam shape, not box
-    let keelGeo=new THREE.BoxGeometry(12,0.35,0.4); let keel=addRealPart(keelGeo, redMat, [0,-1.4,0]);
+function build(s){
+  ship.clear();
+  // CRANE HOOK - Stage ke hisab se upar-neeche, LEGO block laya
+  craneHook.position.x = Math.sin(s*0.8)*3; craneHook.position.y = 3.8 - (s%2)*0.5;
+  if(s>=1) addBox(12,0.35,0.4,[0,-1.5,0],0xff2200,"KEEL 200m");
+  if(s>=2) for(let i=-5;i<=5;i++) { let f=new THREE.Mesh(new THREE.TorusGeometry(1.15,0.07,8,20,Math.PI),mat(0xcccccc)); f.position.set(i*1.1,-0.6,0); f.rotation.y=Math.PI/2; ship.add(f); }
+  if(s>=3) addBox(10,0.4,1.4,[0,-1.2,0],0x0066aa,"DOUBLE BOTTOM - Ballast/Fuel");
+  if(s>=4){ // Hull - Real shape, Extrude se
+    let shape=new THREE.Shape(); shape.moveTo(-6,-0.5); shape.lineTo(5,-0.5); shape.quadraticCurveTo(6.6,-0.3,6.8,0.3); shape.lineTo(6.2,1.1); shape.lineTo(-6,1.1); shape.quadraticCurveTo(-6.5,0,-6,-0.5);
+    let hg=new THREE.ExtrudeGeometry(shape,{depth:1.6,bevelEnabled:true,bevelThickness:0.12,bevelSize:0.12,bevelSegments:2});
+    let hull=new THREE.Mesh(hg,mat(curVessel=='TANKER'?0x882200:curVessel=='LNG'?0xdddddd:0x0033aa,0.7,0.3)); hull.rotation.y=Math.PI/2; hull.position.set(0,0,-0.8); ship.add(hull);
   }
-  if(stage>=1){
-    for(let i=-5;i<=5;i++){ let fGeo=new THREE.TorusGeometry(1.1,0.06,8,20,Math.PI); let f=addRealPart(fGeo, steel, [i*1.1,-0.5,0], [0,0,0]); f.rotation.y=Math.PI/2; }
+  if(s>=5) addSphere(0.45,[6.5,-1,0],0x00ffff);
+  if(s>=6){ addBox(0.3,1.8,0.2,[-6.4,0,0],0x333333,"RUDDER"); addCyl(0.65,0.65,0.15,[-7.1,-0.5,0],0xffaa00,[0,0,Math.PI/2]); }
+  if(s>=7){ addBox(11,0.15,1.8,[0,1.1,0],0xaaaaaa,"MAIN DECK 40T/m2"); for(let i=-4;i<=4;i+=2) addBox(0.12,1.8,1.6,[i,0.2,0],0x555555,"BULKHEAD A-60"); }
+  if(s>=8){ addBox(2.2,1.2,1,[-2.5,0.2,0],0x444444,"MAIN ENGINE MAN 8000kW"); addBox(1,0.8,0.8,[-1,1,0.4],0xcccccc,"GEN 1500kW"); addBox(1.2,1,1,[-1.5,1.6,0],0x00ffaa,"ECR CONTROL ROOM"); addCyl(0.05,0.05,3,[-2,0.5,0.3],0xff0000,[0,0,0.5]); addCyl(0.05,0.05,3,[-2,0.5,-0.3],0x0000ff,[0,0,0.5]); }
+  if(s>=9){ addBox(2.2,2.2,1.4,[-4.2,2.4,0],0xffffff,"ACCOM 5 FLOORS - Apartment"); }
+  if(s>=10){ addBox(1.8,0.8,1.1,[-4.2,3.9,0],0xffffff,"BRIDGE"); addCyl(0.35,0.45,1,[-3,3,0],0x333333); }
+  if(s>=11){
+    if(curVessel=='CONTAINER') for(let i=0;i<6;i++) for(let h=0;h<2;h++) addBox(0.9,0.45,0.45,[-2+i*1.05,1.8+h*0.5,0],h?0x00ff88:0x0088ff,"CONTAINER 20ft");
+    if(curVessel=='TANKER') for(let i=0;i<3;i++) addCyl(0.6,0.6,1.5,[-3+i*2,1.7,0],0xff8800,[0,0,Math.PI/2]);
+    if(curVessel=='LNG') for(let i=0;i<3;i++) addSphere(0.7,[-3+i*2.5,1.9,0],0xffffff);
+    if(curVessel=='BULK') for(let i=0;i<3;i++) addBox(1.8,0.7,1.2,[-3+i*2.2,1.6,0],0x8B4513,"BULK HOLD");
+    if(curVessel=='RORO') addBox(8,0.6,1.4,[0,1.6,0],0xffffff,"CAR DECK");
+    if(curVessel=='CRUISE') for(let i=0;i<4;i++) addBox(8,0.2,1.4,[0,1.7+i*0.35,0],0xffffff,"CRUISE DECK");
   }
-  if(stage>=2){ let hull=createRealHull(curVessel=='tanker'?0x882200:curVessel=='lng'?0xcccccc:0x0066cc); shipGroup.add(hull); }
-  if(stage>=3){ let bulb=addRealPart(new THREE.SphereGeometry(0.45,16,16), new THREE.MeshStandardMaterial({color:0x00ffff,metalness:0.7,roughness:0.2}), [6.5,-1,0]); }
-  if(stage>=4){ addRealPart(new THREE.CylinderGeometry(0.08,0.08,1.8,10), darkSteel, [-6.5,0,0]); addRealPart(new THREE.CylinderGeometry(0.6,0.6,0.15,20), redMat, [-7.2,-0.5,0], [0,0,Math.PI/2]); }
-  if(stage>=5){ addRealPart(new THREE.BoxGeometry(9,0.4,1.4), darkSteel, [0,-1.1,0]); }
-  if(stage>=6){ addRealPart(new THREE.BoxGeometry(11,0.15,1.8), steel, [0,1.1,0]); }
-  if(stage>=7){ addRealPart(new THREE.BoxGeometry(2.2,2.2,1.4), whiteMat, [-4.2,2.4,0]); }
-  if(stage>=8){ addRealPart(new THREE.BoxGeometry(2.2,1.2,1), darkSteel, [-2.5,0.2,0]); addRealPart(new THREE.CylinderGeometry(0.05,0.05,3,8), redMat, [-2,0.5,0.3], [0,0,0.5]); addRealPart(new THREE.CylinderGeometry(0.05,0.05,3,8), new THREE.MeshStandardMaterial({color:0x0000ff}), [-2,0.5,-0.3], [0,0,0.5]); }
-  if(stage>=9){ addRealPart(new THREE.BoxGeometry(1.8,0.8,1.1), whiteMat, [-4.2,3.9,0]); addRealPart(new THREE.CylinderGeometry(0.35,0.4,1,14), darkSteel, [-3,3,0]); }
-  if(stage>=10){
-    if(curVessel=='container') for(let i=0;i<6;i++) for(let h=0;h<2;h++) addRealPart(new THREE.BoxGeometry(0.9,0.45,0.45), new THREE.MeshStandardMaterial({color:h?0x00ff88:0x0088ff,metalness:0.6,roughness:0.4}), [-2+i*1.05,1.8+h*0.5,0]);
-    if(curVessel=='tanker') for(let i=0;i<3;i++) addRealPart(new THREE.CylinderGeometry(0.6,0.6,1.5,16), new THREE.MeshStandardMaterial({color:0xff8800,metalness:0.7,roughness:0.3}), [-3+i*2,1.6,0], [0,0,Math.PI/2]);
-    if(curVessel=='lng') for(let i=0;i<3;i++) addRealPart(new THREE.SphereGeometry(0.7,20,20), whiteMat, [-3+i*2.5,1.8,0]);
-    if(curVessel=='bulk') for(let i=0;i<3;i++) addRealPart(new THREE.BoxGeometry(1.8,0.7,1.2), new THREE.MeshStandardMaterial({color:0x8B4513}), [-3+i*2.2,1.6,0]);
-    if(curVessel=='roro') addRealPart(new THREE.BoxGeometry(8,0.6,1.4), whiteMat, [0,1.6,0]);
-    if(curVessel=='cruise') for(let i=0;i<4;i++) addRealPart(new THREE.BoxGeometry(8,0.2,1.4), whiteMat, [0,1.7+i*0.35,0]);
-  }
-  // CUTAWAY - Front ko transparent karo taaki andar dikhe
-  if(cut) shipGroup.children.forEach(m=>{ if(m.position.x>0) m.material.transparent=true, m.material.opacity=0.35; });
-  if(wire) shipGroup.children.forEach(m=>{ m.material.wireframe=true; });
-  // CENTRE ME RAKHO - Bounding box se centre nikalo
-  let box=new THREE.Box3().setFromObject(shipGroup);
-  let center=box.getCenter(new THREE.Vector3());
-  shipGroup.position.sub(center); shipGroup.position.y+=0.5;
-  document.getElementById('stageTxt').innerText=stages[stage].t;
-  document.getElementById('hud').innerHTML=`<b>${stages[stage].t}</b><br>${stages[stage].d}<br>VESSEL: ${curVessel.toUpperCase()} | Ship is CENTRED<br>Drag = Rotate | Pinch = Zoom`;
-  document.getElementById('loading').style.display='none';
+  if(s>=12){ water.position.y=-0.8; document.getElementById('waterTag').style.display='block'; ship.position.y=0.6; }
+  else { water.position.y=-2.15; document.getElementById('waterTag').style.display='none'; ship.position.y=0; }
+  if(cut) ship.children.forEach(m=>{ if(m.position.x>0) { m.material.transparent=true; m.material.opacity=0.3; } });
+  if(wire) ship.children.forEach(m=>{ if(m.material) m.material.wireframe=true; });
+  // CENTER FIX - Ship hamesha centre me
+  let box=new THREE.Box3().setFromObject(ship); if(!box.isEmpty()){ let c=box.getCenter(new THREE.Vector3()); ship.position.x-=c.x; ship.position.z-=c.z; }
+  document.getElementById('stageTxt').innerText=stages[s].t;
+  document.getElementById('hud').innerHTML=`<b>${stages[s].t}</b><br>${stages[s].d}<br>VESSEL: ${curVessel} | FIXED CAMERA - SIDE VIEW<br>Crane se Block aaya | Tap Part for Details`;
   updateLists();
 }
 function updateLists(){
-  let bHTML=`<div class="stage" onclick="setStage(0)">BLOCK 1 - BOW<br>Keel, Stem, Bulbous Bow</div><div class="stage" onclick="setStage(5)">BLOCK 2 - CENTRE<br>Holds, Double Bottom</div><div class="stage" onclick="setStage(7)">BLOCK 3 - ACCOM<br>Apartment, Cabins</div><div class="stage" onclick="setStage(8)">BLOCK 4 - ENGINE<br>Main Engine + Pipes</div><div class="stage" onclick="setStage(4)">BLOCK 5 - STERN<br>Rudder, Prop, Poop Deck</div>`;
-  document.getElementById('blockList').innerHTML=bHTML;
-  let sHTML=""; stages.forEach((s,i)=>{ sHTML+=`<div class="stage ${i==curStage?'active':''}" onclick="setStage(${i})">${s.t}</div>`; }); document.getElementById('stageList').innerHTML=sHTML;
+  document.getElementById('blockList').innerHTML=`<div class="stage" onclick="setStage(5)">BLOCK 1 - BOW<br>Keel, Stem, Bulbous Bow</div><div class="stage" onclick="setStage(7)">BLOCK 2 - CENTRE<br>Holds, Double Bottom</div><div class="stage" onclick="setStage(9)">BLOCK 3 - ACCOM<br>Apartment, Cabins</div><div class="stage" onclick="setStage(8)">BLOCK 4 - ENGINE<br>Engine + Pipes</div><div class="stage" onclick="setStage(6)">BLOCK 5 - STERN<br>Rudder, Prop, Poop</div>`;
+  let h=""; stages.forEach((st,i)=>{ h+=`<div class="stage ${i==curStage?'active':''}" onclick="setStage(${i})">${st.t}</div>`; }); document.getElementById('stageList').innerHTML=h;
 }
 window.setStage=(s)=>{ curStage=s; document.getElementById('slider').value=s; build(s); };
 window.setVessel=(v)=>{ curVessel=v; document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active')); build(curStage); };
-window.toggleWire=()=>{ wire=!wire; build(curStage); };
 window.toggleCut=()=>{ cut=!cut; build(curStage); };
-window.playBuild=()=>{ let i=0; let iv=setInterval(()=>{ setStage(i); i++; if(i>10) clearInterval(iv); },1000); };
+window.toggleWire=()=>{ wire=!wire; build(curStage); };
+window.floatOut=()=>{ setStage(12); let y=-2.15; let iv=setInterval(()=>{ y+=0.05; water.position.y=y; ship.position.y+=0.02; if(y>=-0.8) clearInterval(iv); },50); };
+window.playBuild=()=>{ if(animating) return; animating=true; let i=0; let iv=setInterval(()=>{ setStage(i); i++; if(i>12){ clearInterval(iv); animating=false; } },1100); };
 document.getElementById('slider').addEventListener('input',e=>setStage(parseInt(e.target.value)));
 window.addEventListener('resize',()=>{ renderer.setSize(vp.clientWidth,vp.clientHeight); camera.aspect=vp.clientWidth/vp.clientHeight; camera.updateProjectionMatrix(); });
-(function anim(){ requestAnimationFrame(anim); controls.update(); renderer.render(scene,camera); })();
+(function anim(){ requestAnimationFrame(anim); sparks.forEach((s,i)=>{ s.position.y+=0.02; s.position.x+=(Math.random()-0.5)*0.05; if(s.position.y>0) s.position.y=-1.5; }); craneHook.rotation.y+=0.01; controls.update(); renderer.render(scene,camera); })();
 build(0);
 </script>
 </body>
