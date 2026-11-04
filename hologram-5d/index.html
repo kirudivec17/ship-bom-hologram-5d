@@ -2,153 +2,160 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>SHIP 5D CONSTRUCTION - START TO END</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>REAL 5D SHIP BUILDER - NO PHOTOS</title>
 <style>
-body{margin:0;background:#000a14;overflow:hidden;font-family:monospace;color:#0ff}
-#top{position:absolute;top:0;left:0;right:0;background:rgba(0,15,30,0.95);border-bottom:2px solid #0ff;padding:8px;display:flex;gap:8px;overflow-x:auto;z-index:20}
-.b{border:1px solid #0ff;background:#002040;color:#0ff;padding:6px 10px;white-space:nowrap;font-size:11px}
-.b.active{background:#0ff;color:#000}
-#dim{position:absolute;top:60px;left:10px;background:rgba(0,30,50,0.9);border:1px solid #0ff;padding:10px;font-size:11px;line-height:1.6;z-index:10;min-width:210px}
-#bom{position:absolute;top:60px;right:10px;background:rgba(0,30,50,0.9);border:1px solid #0ff;padding:10px;font-size:10px;z-index:10;max-height:70vh;overflow-y:auto;width:200px}
+body{margin:0;background:#000a14;color:#0ff;font-family:monospace;overflow:hidden;height:100dvh;display:flex;flex-direction:column}
+header{background:#001122;border-bottom:2px solid #0ff;padding:8px;display:flex;gap:8px;overflow-x:auto}
+header button{border:1px solid #0ff;background:#002040;color:#0ff;padding:8px 10px;white-space:nowrap}
+header button.active{background:#0ff;color:#000}
+#wrap{flex:1;display:flex;min-height:0}
+#side{width:260px;background:#001122;border-right:2px solid #0ff;padding:10px;overflow-y:auto}
+#side h3{color:#fff;font-size:12px;margin:8px 0 4px}
+.block{border:1px solid #0ff;padding:8px;margin-bottom:6px;font-size:11px;line-height:1.5;cursor:pointer}
+.block.active{background:#0ff;color:#000}
+#view{flex:1;position:relative}
 canvas{display:block}
-#slider{position:absolute;bottom:0;left:0;right:0;background:rgba(0,20,40,0.95);border-top:2px solid #0ff;padding:10px;z-index:20}
-input[type=range]{width:100%}
+#info{position:absolute;left:10px;bottom:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:10px;font-size:11px;line-height:1.6;max-width:90%}
+#vessel{position:absolute;right:10px;top:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:8px;font-size:11px}
+#footer{background:#001122;border-top:2px solid #0ff;padding:10px}
+#footer input{width:100%}
+@media(max-width:768px){#wrap{flex-direction:column}#side{width:100%;height:140px;border-right:0;border-bottom:2px solid #0ff}#view{height:52vh}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-<div id="top">
-<button class="b active" onclick="setStage(0)">0: KEEL LAYING</button>
-<button class="b" onclick="setStage(1)">1: FRAMES 0-50</button>
-<button class="b" onclick="setStage(2)">2: HULL PLATING</button>
-<button class="b" onclick="setStage(3)">3: BULBOUS BOW</button>
-<button class="b" onclick="setStage(4)">4: MAIN DECK</button>
-<button class="b" onclick="setStage(5)">5: SUPERSTRUCTURE</button>
-<button class="b" onclick="setStage(6)">6: CONTAINERS + CRANES</button>
-<button class="b" onclick="setStage(7)">7: FINAL 5D EXPLODE</button>
+<header>
+<button onclick="setVessel('CONTAINER')" id="v0" class="active">CONTAINER</button>
+<button onclick="setVessel('BULK')" id="v1">BULK CARRIER</button>
+<button onclick="setVessel('TANKER')" id="v2">OIL TANKER</button>
+<button onclick="setVessel('LNG')" id="v3">LNG CARRIER</button>
+<button onclick="setVessel('RORO')" id="v4">RO-RO</button>
+<button onclick="setVessel('CRUISE')" id="v5">CRUISE</button>
+<button onclick="toggleCut()">✂️ CUTAWAY: <span id="cutTxt">ON</span></button>
+<button onclick="togglePipes()">🔴 PIPES</button>
+<button onclick="playAnim()">▶️ PLAY FULL BUILD</button>
+</header>
+<div id="wrap">
+<div id="side">
+<h3>5 BLOCKS - TAP TO BUILD</h3>
+<div id="blocks"></div>
+<h3>CONSTRUCTION STEPS</h3>
+<div id="steps"></div>
 </div>
-
-<div id="dim">
-<div style="color:#fff;font-weight:bold">SHIP DIMENSIONS [LIVE]</div>
-<div id="dtext">Loading...</div>
+<div id="view">
+<div id="vessel">VESSEL: CONTAINER<br>LOA 200m | BEAM 32.2m</div>
+<div id="info">Loading Real 3D...</div>
 </div>
-
-<div id="bom">
-<div style="color:#fff;font-weight:bold">BOM + COST 5D</div>
-<div id="btext">Loading...</div>
 </div>
-
-<div id="slider">
-<div style="display:flex;justify-content:space-between;font-size:10px"><span>START</span><span id="slabel">STAGE 0: KEEL</span><span>END - DELIVERY</span></div>
-<input type="range" min="0" max="7" value="0" id="rng" oninput="setStage(this.value)">
-<div style="font-size:9px;margin-top:4px">Drag=Rotate | Pinch=Zoom | Tap Part=Details | 5D = X,Y,Z + Cost/Time + Assembly Layer</div>
-</div>
-
+<div id="footer"><div style="display:flex;justify-content:space-between;font-size:10px"><span>KEEL</span><span id="stageTxt">STAGE 0</span><span>DELIVERY</span></div><input type="range" id="slider" min="0" max="10" value="0"></div>
 <script>
-let scene,camera,renderer,ship,stage=0;
-scene=new THREE.Scene(); scene.fog=new THREE.Fog(0x000a14,12,30);
-camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,1000); camera.position.set(0,4,10);
-renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(innerWidth,innerHeight); document.body.appendChild(renderer.domElement);
-scene.add(new THREE.AmbientLight(0x00aaff,0.7));
+let scene,camera,renderer,ship,cut=true,showPipes=true,curStage=0,curVessel='CONTAINER';
+scene=new THREE.Scene(); scene.fog=new THREE.Fog(0x000a14,20,40);
+camera=new THREE.PerspectiveCamera(45,1,0.1,100); camera.position.set(8,4,10);
+renderer=new THREE.WebGLRenderer({antialias:true}); document.getElementById("view").appendChild(renderer.domElement);
+function resize(){let v=document.getElementById("view"); renderer.setSize(v.clientWidth,v.clientHeight); camera.aspect=v.clientWidth/v.clientHeight; camera.updateProjectionMatrix();} window.addEventListener("resize",resize); resize();
+scene.add(new THREE.AmbientLight(0x88ccff,0.9));
 let dl=new THREE.DirectionalLight(0x00ffff,1.2); dl.position.set(10,15,10); scene.add(dl);
-let grid=new THREE.GridHelper(40,40,0x004466,0x001122); grid.position.y=-2; scene.add(grid);
+let grid=new THREE.GridHelper(40,40,0x004466,0x001122); grid.position.y=-2.5; scene.add(grid);
 
-let ray=new THREE.Raycaster(), mouse=new THREE.Vector2(), parts=[];
-
-function clear(){ if(ship) scene.remove(ship); ship=new THREE.Group(); parts=[]; }
-
-function addBox(name,w,h,d,pos,color,cost,dim){
+let allMeshes=[];
+function mat(color,op=0.9){ return new THREE.MeshPhongMaterial({color,transparent:true,opacity:op,emissive:color,emissiveIntensity:0.15}); }
+function box(name,w,h,d,pos,color,info,block){
  let g=new THREE.BoxGeometry(w,h,d);
- let m=new THREE.MeshPhongMaterial({color:color,transparent:true,opacity:0.85,wireframe:false,emissive:color,emissiveIntensity:0.2});
- let mesh=new THREE.Mesh(g,m);
- mesh.position.set(...pos);
- mesh.userData={name,w,h,d,cost,dim};
- ship.add(mesh); parts.push(mesh);
- // wireframe edge
- let edge=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:0x00ffff}));
- edge.position.copy(mesh.position); ship.add(edge);
- return mesh;
+ let m=new THREE.Mesh(g,mat(color));
+ let e=new THREE.LineSegments(new THREE.EdgesGeometry(g),new THREE.LineBasicMaterial({color:0x00ffff}));
+ m.position.set(...pos); e.position.copy(m.position);
+ m.userData={name,info,block};
+ ship.add(m); ship.add(e); allMeshes.push(m); return m;
+}
+function cyl(name,r,h,pos,color,info,block,rotZ=0){
+ let m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,12),mat(color));
+ m.position.set(...pos); m.rotation.z=rotZ; m.userData={name,info,block}; ship.add(m); allMeshes.push(m); return m;
+}
+function pipe(name,from,to,color){
+ let dir=new THREE.Vector3(to[0]-from[0],to[1]-from[1],to[2]-from[2]);
+ let len=dir.length();
+ let m=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,len,8),mat(color,0.95));
+ m.position.set((from[0]+to[0])/2,(from[1]+to[1])/2,(from[2]+to[2])/2);
+ m.rotation.z=Math.atan2(dir.y,dir.x)-Math.PI/2;
+ m.userData={name,info:"PIPE: "+color,block:4};
+ if(showPipes) ship.add(m);
 }
 
-function setStage(s){
- s=parseInt(s); stage=s; document.getElementById("rng").value=s;
- document.querySelectorAll(".b").forEach((b,i)=>b.classList.toggle("active",i==s));
- clear();
- let dimText="", bomText="", total=0;
+let stages=[
+ {t:"0: KEEL LAYING",d:"Keel 200m - Ship ki reedh",b:0},
+ {t:"1: KEEL + GIRDERS",d:"Centre Girder + Side Girders",b:0},
+ {t:"2: FRAMES 0-50",d:"Frames khade - Skeleton",b:0},
+ {t:"3: HULL SIDE PLATES",d:"Port/Stbd Plates 18mm",b:1},
+ {t:"4: BULBOUS BOW + STEM",d:"Bow 2.8m Dia - Drag -12%",b:1},
+ {t:"5: STERN + RUDDER + PROP",d:"Stern Frame, Rudder, 5-Blade Prop",b:5},
+ {t:"6: DOUBLE BOTTOM + TANKS",d:"Ballast, Fuel, Fresh Water",b:2},
+ {t:"7: MAIN DECK + BULKHEADS",d:"Watertight Bulkheads A-60",b:2},
+ {t:"8: ACCOMMODATION + BRIDGE",d:"5 Floors Apartment jaisa",b:3},
+ {t:"9: ENGINE ROOM + PIPES",d:"MAN 8000kW + Pipes jaal",b:4},
+ {t:"10: CARGO + FINAL",d:"Containers / Cargo Load - DELIVERY",b:2},
+];
 
- if(s>=0){ // KEEL
-  addBox("KEEL PLATE - Bottom Spine",12,0.4,0.3,[0,-1.5,0],0xff3300,"₹ 1.2Cr","L: 200m x W: 0.8m x T: 40mm");
-  dimText+="Keel: 200m Long<br>"; bomText+="Keel Plate: ₹1.2Cr<br>"; total+=1.2;
+function build(stage){
+ if(ship) scene.remove(ship); ship=new THREE.Group(); allMeshes=[];
+ // BLOCK 1 - BOW - Keel se Stem tak
+ if(stage>=0) box("KEEL - 200m x 40mm",12,0.35,0.35,[0,-1.8,0],0xff3300,"Keel: 200m | 40mm AH36 | 1240 Ton",1);
+ if(stage>=1){ box("CENTRE GIRDER",12,0.6,0.1,[0,-1.3,0],0xff6600,"Centre Girder",1); box("SIDE GIRDER P",12,0.4,0.08,[0,-1.3,0.5],0xff6600,"Side Girder",1); }
+ if(stage>=2) for(let i=-5;i<=5;i++) box(`FRAME ${i+50} - 2.5m Spacing`,0.12,2.2,1.6,[i*1.1,-0.6,0],0x0066ff,`Frame ${i} | Height 12m | Spacing 2.5m`,1);
+ if(stage>=3){ box("HULL PORT - 18mm",12,1.6,0.06,[-0.8,0.2,0],0x00aaff,"Port Side 18mm AH36",2); box("HULL STBD - 18mm",12,1.6,0.06,[0.8,0.2,0],0x00aaff,"Stbd Side",2); box("BOTTOM PLATE - 22mm",12,0.08,1.6,[0,-1.1,0],0x0088cc,"Bottom 22mm",2); }
+ if(stage>=4){ cyl("BULBOUS BOW - Dia 2.8m",0.45,1.2,[6.6,-1.2,0],0x00ffff,"Bulbous Bow | Drag -12%",1,Math.PI/2); box("STEM POST",0.3,2.2,0.2,[6.2,0,0],0x00ffff,"Stem - Bow ka agla hissa",1); box("FOREPEAK TANK",1,1,1,[5.2,0,0],0x003344,"Forepeak / Ballast Tank",1); }
+ if(stage>=5){ box("STERN FRAME",0.3,2,0.2,[-6.2,0,0],0x00ffff,"Stern Frame",5); cyl("RUDDER",0.25,1.5,[-6.8,0,0],0x888888,"Rudder - Steering",5); cyl("PROPELLER - 5 Blade",0.6,0.15,[-7.2,-0.5,0],0xffaa00,"Prop 5 Blade | 120 RPM",5,Math.PI/2); box("SHAFT TUNNEL",3,0.4,0.4,[-5,-1.2,0],0x333333,"Shaft Tunnel - Engine se Prop tak",5); box("STEERING GEAR ROOM",1,1,1,[-5.5,1,0],0x444444,"Steering Gear",5); }
+ if(stage>=6){ box("DOUBLE BOTTOM TANK",10,0.4,1.2,[0,-1.4,0],0x0066aa,"DB Tank - Ballast/Fuel 1200m3",2); box("BALLAST TANK P",8,0.8,0.4,[-0.6,-0.5,0],0x0099ff,"Ballast Port",2); box("BALLAST TANK S",8,0.8,0.4,[0.6,-0.5,0],0x0099ff,"Ballast Stbd",2); box("FRESH WATER TANK",2,0.8,1,[4,-0.5,0],0x00ffff,"FW 170m3",2); }
+ if(stage>=7){ box("MAIN DECK - 40T/m2",12,0.2,1.8,[0,1.1,0],0xaaaaaa,"Main Deck 40T/m2",2); for(let i=-4;i<=4;i+=2) box(`W.T. BULKHEAD ${i}`,0.1,1.8,1.6,[i,0.2,0],0x555555,`Bulkhead A-60 | Frame ${i}`,2); box("HATCH COAMING",8,0.4,1.4,[0,1.4,0],0x888888,"Hatch",2); }
+ if(stage>=8){ box("ACCOM BLOCK - 5 Floors",2.5,2.2,1.5,[-4.2,2.4,0],0xffffff,"Accom: 30 Crew | Cabins, Galley, Mess",3); box("BRIDGE - Wheelhouse",2,0.8,1.2,[-4.2,3.9,0],0x88ffff,"Bridge - Navigation",3); box("FUNNEL",0.8,1,0.8,[-3,3,0],0x333333,"Funnel - Exhaust",3); box("LIFEBOAT DAVIT",0.5,0.5,0.5,[-5,2.5,0.8],0xff6600,"Lifeboat",3); }
+ if(stage>=9){ box("MAIN ENGINE MAN 8000kW",2.5,1.2,1,[-2.5,0,0],0x555555,"MAN B&W 8000kW | 120 RPM",4); box("GENERATOR 1 - 1500kW",1,0.8,0.8,[-1,1,0.4],0xaaaaaa,"Gen 1500kW",4); box("GENERATOR 2",1,0.8,0.8,[-1,1,-0.4],0xaaaaaa,"Gen 1500kW",4); box("ECR - CONTROL ROOM",1.2,1,1,[ -1.5,1.5,0],0x00ffaa,"ECR - AC Control Room",4); pipe("FUEL OIL LINE - RED",[-2.5,0.5,0],[5,0.5,0],0xff0000); pipe("COOLING WATER - BLUE",[-2.5,-0.5,0],[5,-0.5,0],0x0000ff); pipe("EXHAUST - YELLOW",[-2.5,1,0],[-3,3,0],0xffff00); pipe("BILGE LINE",[-5,-1.5,0],[5,-1.5,0],0x00ff00); }
+ if(stage>=10){
+   if(curVessel=='CONTAINER') for(let i=0;i<8;i++) for(let h=0;h<2;h++) box(`CONTAINER ${i}-${h} 20ft`,0.9,0.45,0.45,[-2+i*1.05,1.9+h*0.5,0],h?0x00ff88:0x0088ff,`20ft TEU | 28T`,2);
+   if(curVessel=='BULK') for(let i=0;i<4;i++) box(`BULK HOLD ${i} - Coal/Grain`,1.8,0.8,1.2,[-3+i*2,1.2,0],0x8B4513,`Bulk Hold | Grain 1200m3`,2);
+   if(curVessel=='TANKER') for(let i=0;i<4;i++) cyl(`CARGO TANK ${i}`,0.6,1.5,[-3+i*2,1.2,0],0xff8800,`Oil Tank | Foam System`,2,Math.PI/2);
+   if(curVessel=='LNG') for(let i=0;i<3;i++) cyl(`LNG SPHERE ${i} -163C`,0.7,1,[-3+i*2.5,1.5,0],0xcccccc,`LNG -163C Membrane`,2,0);
+   if(curVessel=='RORO') for(let i=0;i<5;i++) box(`CAR DECK ${i}`,0.8,0.3,1.2,[-2+i*1,1.6,0],0x00ff00,`Car Deck | 200 Cars`,2);
+   if(curVessel=='CRUISE') for(let i=0;i<5;i++) box(`CRUISE DECK ${i}`,8,0.25,1.4,[0,1.6+i*0.3,0],0xffffff,`Passenger Deck | 3000 Pax`,3);
+   box("CRANE 40T",0.2,2.5,0.2,[2,2.5,0],0xffaa00,"Crane 40T SWL",2);
  }
- if(s>=1){ // FRAMES
-  for(let i=-5;i<=5;i++){ addBox(`FRAME ${i+50}`,0.1,2,1.2,[i*1.1,-0.5,0],0x0066ff,`₹ 2.5L`,`Frame Spacing: 2.5m | Height: 12m`); total+=0.025; }
-  dimText+="Frames: 51 Nos | Spacing 2.5m<br>Beam: 32.2m<br>"; bomText+="51 Frames: ₹12.75L<br>";
- }
- if(s>=2){ // HULL PLATING
-  addBox("HULL PORT SIDE",12,1.5,0.05,[-0.65,0,0],0x00aaff,"₹ 18L","T: 18mm Steel | AH36 Grade");
-  addBox("HULL STBD SIDE",12,1.5,0.05,[0.65,0,0],0x00aaff,"₹ 18L","T: 18mm Steel");
-  addBox("BOTTOM PLATING",12,0.05,1.3,[0,-0.9,0],0x0088cc,"₹ 22L","T: 22mm");
-  dimText+="Hull: L 200m x B 32.2m x D 18m<br>"; bomText+="Plating: ₹58L<br>"; total+=0.58;
- }
- if(s>=3){ // BULBOUS BOW - like your photo
-  addBox("BULBOUS BOW",1.2,1,0.8,[6.5,-0.8,0],0x00ffff,"₹ 35L","Dia: 2.8m | Reduces drag 12%");
-  addBox("BOW THRUSTER TUNNEL",0.6,0.6,0.6,[5.8,-1,0],0x333333,"₹ 18L","1500kW");
-  dimText+="Bulbous Bow: 2.8m Dia<br>"; bomText+="Bow System: ₹53L<br>"; total+=0.53;
- }
- if(s>=4){ // DECK
-  addBox("MAIN DECK",12,0.2,1.4,[0,1,0],0xaaaaaa,"₹ 8Cr","Strength: 40T/m²");
-  addBox("HATCH COAMING",1,0.4,1.2,[0,1.3,0],0x888888,"₹ 1.1Cr","10 Hatches");
-  dimText+="Main Deck: 40T/m² Load<br>"; bomText+="Deck: ₹9.1Cr<br>"; total+=9.1;
- }
- if(s>=5){ // SUPERSTRUCTURE
-  addBox("ACCOMMODATION BLOCK",2.5,2.2,1.2,[-4.5,2.2,0],0xffffff,"₹ 12Cr","5 Floors | 30 Crew");
-  addBox("BRIDGE - Wheelhouse",2,0.8,1,[-4.5,3.7,0],0x88ffff,"₹ 3.5Cr","Navigation Systems");
-  addBox("FUNNEL + ENGINE CASING",1,1.5,0.8,[-3,2,0],0x444444,"₹ 2.8Cr","MAN B&W 8000kW");
-  dimText+="Superstructure: 5 Floors<br>Engine: 8000kW MAN<br>"; bomText+="Accom + Bridge: ₹18.3Cr<br>"; total+=18.3;
- }
- if(s>=6){ // CONTAINERS + CRANES like photo
-  for(let i=0;i<8;i++){ for(let h=0;h<2;h++){ addBox(`CONTAINER ${i}-${h}`,0.9,0.4,0.4,[-3+i*1.1,1.5+h*0.45,0], h==1?0x00ff88:0x0088ff,`₹ 3.2L`,`20ft TEU | 28T`); total+=0.032; }}
-  addBox("CRANE 1 - Port",0.15,2.5,0.15,[1,2.2,0],0xffaa00,"₹ 2.2Cr","40T SWL");
-  addBox("CRANE 2 - Stbd",0.15,2.5,0.15,[4,2.2,0],0xffaa00,"₹ 2.2Cr","40T SWL");
-  dimText+="Containers: 2400 TEU<br>Cranes: 40T x 2<br>"; bomText+=`Containers: ₹5.12Cr<br>Cranes: ₹4.4Cr<br>`;
- }
- if(s>=7){ // EXPLODE 5D
-  ship.children.forEach((m,i)=>{ m.position.x+=(Math.random()-0.5)*3; m.position.y+=Math.random()*3; m.position.z+=(Math.random()-0.5)*2; });
-  dimText+="<br><b style='color:#ff0'>5D EXPLODED VIEW ACTIVE</b><br>All layers separated";
- }
-
- document.getElementById("dtext").innerHTML=dimText+`<br><b>Total Length: 200m | Beam: 32.2m | Draft: 12.5m</b>`;
- document.getElementById("btext").innerHTML=bomText+`<hr><b>TOTAL: ₹${total.toFixed(2)}Cr<br>Steel: 8500 Ton</b><br><br>Tap any part for size`;
- document.getElementById("slabel").innerText=`STAGE ${s}: ${["KEEL LAYING","FRAMES","HULL PLATING","BULBOUS BOW","MAIN DECK","SUPERSTRUCTURE","CARGO+CRANES","5D EXPLODE"][s]}`;
-
+ // CUTAWAY - agar ON hai toh front hull ko halka transparent karo taaki andar dikhe
+ if(cut) allMeshes.forEach(m=>{ if(m.position.x>0 && m.position.z==0) m.material.opacity=0.35; });
  scene.add(ship);
- // reflection
- let refl=ship.clone(); refl.children.forEach(c=>c.material=new THREE.MeshBasicMaterial({color:0x002244,wireframe:true,transparent:true,opacity:0.08})); refl.position.y=-4; refl.scale.y=-0.3; scene.add(refl);
- setTimeout(()=>{ refl.visible=false; },100); // hide heavy clone
- scene.add(ship);
+ document.getElementById("stageTxt").innerText=stages[stage].t;
+ document.getElementById("info").innerHTML=`<b>${stages[stage].t}</b><br>${stages[stage].d}<br><b>VESSEL:</b> ${curVessel} | Total: ₹${(stage*3.2).toFixed(1)}Cr | Steel: ${(stage*850).toFixed(0)} Ton<br>Tap any part for details | Drag to Rotate`;
+ updateSide();
 }
-
-setStage(0);
-
-// Click for details
-renderer.domElement.addEventListener("click",e=>{
- mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
- ray.setFromCamera(mouse,camera);
- let inter=ray.intersectObjects(parts);
- if(inter.length){ let d=inter[0].object.userData; document.getElementById("btext").innerHTML=`<b style='color:#fff'>${d.name}</b><br>Cost: ${d.cost}<br>Dim: ${d.dim}<br>Size: ${d.w}m x ${d.h}m x ${d.d}m<hr>`+document.getElementById("btext").innerHTML; }
-});
-
+function updateSide(){
+ let bHTML=`<div class="block ${curStage>=0?'active':''}" onclick="setStage(0)">BLOCK 1 - BOW<br>Keel, Stem, Bulbous Bow, Forepeak</div>
+ <div class="block" onclick="setStage(6)">BLOCK 2 - CENTRE<br>Holds, Double Bottom, Tanks, Pipes</div>
+ <div class="block" onclick="setStage(8)">BLOCK 3 - ACCOM<br>5 Floors Apartment, Bridge</div>
+ <div class="block" onclick="setStage(9)">BLOCK 4 - ENGINE<br>Main Engine, Gen, ECR, Pipes</div>
+ <div class="block" onclick="setStage(5)">BLOCK 5 - STERN<br>Rudder, Prop, Steering, Poop Deck</div>`;
+ document.getElementById("blocks").innerHTML=bHTML;
+ let sHTML=""; stages.forEach((s,i)=>{ sHTML+=`<div class="block ${i==curStage?'active':''}" onclick="setStage(${i})">${s.t}</div>`; }); document.getElementById("steps").innerHTML=sHTML;
+}
+function setStage(s){ curStage=s; document.getElementById("slider").value=s; build(s); }
+function setVessel(v){ curVessel=v; document.querySelectorAll("header button").forEach(b=>b.classList.remove("active")); build(curStage); }
+function toggleCut(){ cut=!cut; document.getElementById("cutTxt").innerText=cut?"ON":"OFF"; build(curStage); }
+function togglePipes(){ showPipes=!showPipes; build(curStage); }
+function playAnim(){ let i=0; let iv=setInterval(()=>{ setStage(i); i++; if(i>10) clearInterval(iv); },1200); }
+document.getElementById("slider").addEventListener("input",e=>setStage(parseInt(e.target.value)));
 let drag=false,px=0,py=0;
 renderer.domElement.addEventListener("mousedown",e=>{drag=true; px=e.clientX; py=e.clientY;});
 window.addEventListener("mouseup",()=>drag=false);
 renderer.domElement.addEventListener("mousemove",e=>{if(!drag)return; ship.rotation.y+=(e.clientX-px)*0.01; ship.rotation.x+=(e.clientY-py)*0.005; px=e.clientX; py=e.clientY;});
 renderer.domElement.addEventListener("touchstart",e=>{drag=true; px=e.touches[0].clientX; py=e.touches[0].clientY;});
-renderer.domElement.addEventListener("touchmove",e=>{if(!drag)return; ship.rotation.y+=(e.touches[0].clientX-px)*0.01; px=e.touches[0].clientX; py=e.touches[0].clientY; e.preventDefault();},{passive:false});
+renderer.domElement.addEventListener("touchmove",e=>{if(!drag)return; ship.rotation.y+=(e.touches[0].clientX-px)*0.01; px=e.touches[0].clientX; e.preventDefault();},{passive:false});
 window.addEventListener("touchend",()=>drag=false);
-renderer.domElement.addEventListener("wheel",e=>{camera.position.z+=e.deltaY*0.01; camera.position.z=Math.max(3,Math.min(20,camera.position.z));});
-(function anim(){requestAnimationFrame(anim); if(ship) ship.rotation.y+=0.0008; renderer.render(scene,camera);})();
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight);});
+renderer.domElement.addEventListener("click",e=>{
+ let mx=(e.clientX/renderer.domElement.clientWidth)*2-1, my=-(e.clientY/renderer.domElement.clientHeight)*2+1;
+ let ray=new THREE.Raycaster(); ray.setFromCamera({x:mx,y:my},camera);
+ let inter=ray.intersectObjects(allMeshes); if(inter.length) document.getElementById("info").innerHTML=`<b>${inter[0].object.userData.name}</b><br>${inter[0].object.userData.info}`;
+});
+renderer.domElement.addEventListener("wheel",e=>{camera.position.z+=e.deltaY*0.01; camera.position.z=Math.max(4,Math.min(20,camera.position.z));});
+(function anim(){requestAnimationFrame(anim); if(ship) ship.rotation.y+=0.0006; renderer.render(scene,camera);})();
+build(0);
 </script>
 </body>
 </html>
