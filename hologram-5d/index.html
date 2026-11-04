@@ -1,161 +1,238 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SHIP 5D - FIXED CAMERA LEGO BUILD</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HOLOGRAM SHIP - Construction System</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#000510;color:#0ff;font-family:monospace;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-header{background:#001122;border-bottom:2px solid #0ff;padding:8px;display:flex;gap:6px;overflow-x:auto}
-header button{border:1px solid #0ff;background:#002040;color:#0ff;padding:8px 10px;white-space:nowrap;font-size:11px}
-header button.active{background:#0ff;color:#000}
-#main{flex:1;display:flex;min-height:0}
-#left{width:230px;background:#001122;border-right:2px solid #0ff;padding:10px;overflow-y:auto}
-#left h3{color:#fff;font-size:11px;margin:10px 0 6px}
-.stage{border:1px solid #0ff;padding:8px;margin-bottom:6px;font-size:11px;line-height:1.5;cursor:pointer}
-.stage.active{background:#0ff;color:#000}
-#vp{flex:1;position:relative;background:radial-gradient(circle at center,#001a33 0%,#000 80%)}
-canvas{display:block;width:100%!important;height:100%!important}
-#hud{position:absolute;left:10px;bottom:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:10px;font-size:11px;line-height:1.6;max-width:92%}
-#vinfo{position:absolute;right:10px;top:10px;background:rgba(0,20,40,.95);border:1px solid #0ff;padding:8px;font-size:11px;text-align:right}
-#waterTag{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:#0066ff;color:#fff;padding:6px 12px;font-size:11px;display:none}
-#footer{background:#001122;border-top:2px solid #0ff;padding:10px}
-#footer input{width:100%;accent-color:#0ff}
-@media(max-width:768px){#left{position:absolute;z-index:20;width:200px;left:0;top:0;bottom:0;transform:translateX(-100%);transition:.3s}#left.open{transform:none}}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
+  body{background:#000;color:#00ffff;overflow-x:hidden;min-height:100vh}
+  /* Hologram glow effect */
+  .glow{text-shadow:0 0 10px #00ffff,0 0 20px #00ffff,0 0 30px #00ffff}
+  header{text-align:center;padding:18px 10px;border-bottom:1px solid #00ffff33}
+  header h1{font-size:22px;letter-spacing:2px}
+  header p{color:#fff;font-size:12px;margin-top:6px;letter-spacing:1px}
+  .top-bar{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:12px}
+  .top-bar button{background:transparent;border:1px solid #00ffff;color:#00ffff;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:bold}
+  .top-bar button.active,.top-bar button:hover{background:#00ffff;color:#000;box-shadow:0 0 15px #00ffff}
+  .container{max-width:1100px;margin:0 auto;padding:14px}
+  /* Ship SVG Area */
+  .ship-stage{position:relative;background:radial-gradient(ellipse at center,#001a1a 0%,#000 70%);border:1px solid #00ffff66;border-radius:16px;padding:20px;overflow:hidden}
+  .ship-stage::before{content:'';position:absolute;left:10%;right:10%;bottom:18px;height:2px;background:#00ffff55;box-shadow:0 0 10px #00ffff}
+  .hint{text-align:center;color:#aaa;font-size:12px;margin:10px 0}
+  /* Ship Parts - Clickable */
+  .part{cursor:pointer;transition:0.2s}
+  .part:hover{filter:drop-shadow(0 0 8px #00ffff)}
+  .part.active{filter:drop-shadow(0 0 12px #ffff00)}
+  .label{fill:#fff;font-size:11px;font-weight:600;pointer-events:none}
+  .label-cyan{fill:#00ffff;font-size:11px;font-weight:700;pointer-events:none}
+  .label-green{fill:#00ff00;font-size:10px;font-weight:700;pointer-events:none}
+  .label-yellow{fill:#ffff00;font-size:10px;font-weight:700;pointer-events:none}
+  .label-pink{fill:#ff00ff;font-size:10px;font-weight:700;pointer-events:none}
+  /* Detail Panel */
+  .detail{display:none;margin-top:14px;border:1px solid #00ffff;border-radius:14px;padding:16px;background:#001111}
+  .detail.show{display:block;animation:fade .3s}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .detail h2{font-size:20px;color:#fff}
+  .detail h2 span{color:#00ffff;font-size:13px}
+  .detail p{color:#ddd;font-size:14px;line-height:1.6;margin-top:8px}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .tag{border:1px solid #00ffff55;padding:5px 10px;border-radius:20px;font-size:12px;color:#00ffff}
+  .tag.green{border-color:#00ff00;color:#00ff00}
+  .tag.yellow{border-color:#ffff00;color:#ffff00}
+  .tag.pink{border-color:#ff00ff;color:#ff00ff}
+  .tag.red{border-color:#ff4444;color:#ff4444}
+  /* Cards Grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
+  .card{border:1px solid #00ffff44;border-radius:14px;padding:14px;background:#000a0a;cursor:pointer}
+  .card:hover{border-color:#00ffff;box-shadow:0 0 15px #00ffff44}
+  .card h3{font-size:15px;color:#fff}
+  .card p{font-size:13px;color:#bbb;line-height:1.5;margin-top:6px}
+  .card b{color:#00ffff}
+  /* Fire Plan Legend */
+  .legend{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0}
+  .legend div{font-size:12px;border:1px solid #333;padding:6px 10px;border-radius:20px}
+  .red{color:#ff4444;border-color:#ff4444!important}
+  .green{color:#00ff00;border-color:#00ff00!important}
+  footer{text-align:center;padding:20px;color:#666;font-size:12px}
+  @media(max-width:600px){header h1{font-size:18px}}
 </style>
-<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body>
+
 <header>
-<button onclick="document.getElementById('left').classList.toggle('open')">☰ MENU</button>
-<button onclick="setVessel('CONTAINER')" class="vbtn active">CONTAINER</button>
-<button onclick="setVessel('BULK')" class="vbtn">BULK</button>
-<button onclick="setVessel('TANKER')" class="vbtn">TANKER</button>
-<button onclick="setVessel('LNG')" class="vbtn">LNG</button>
-<button onclick="setVessel('RORO')" class="vbtn">RO-RO</button>
-<button onclick="setVessel('CRUISE')" class="vbtn">CRUISE</button>
-<button onclick="toggleCut()">✂️ CUTAWAY</button>
-<button onclick="toggleWire()">WIREFRAME</button>
-<button onclick="playBuild()">▶️ PLAY FULL BUILD - LEGO</button>
-<button onclick="floatOut()">🌊 FLOAT-OUT</button>
+  <h1 class="glow">HOLOGRAM SHIP - CONSTRUCTION SYSTEM</h1>
+  <p>PDF + PHOTOS + FIRE PLAN | Tap Any Part To See Details | SOLAS Ch. II-2</p>
 </header>
-<div id="main">
-<div id="left"><h3>5 BLOCKS - LEGO STYLE</h3><div id="blockList"></div><h3>BUILD SEQUENCE</h3><div id="stageList"></div></div>
-<div id="vp"><div id="waterTag">🌊 DRY DOCK FLOODING... SHIP FLOATING!</div><div id="vinfo">CONTAINER<br>LOA 200m | BEAM 32.2m<br>FIXED CAMERA: SIDE VIEW</div><div id="hud">Loading...</div></div>
+
+<div class="top-bar">
+  <button class="active" onclick="showTab('ship',this)">🚢 SHIP VIEW</button>
+  <button onclick="showTab('fire',this)">🔥 FIRE PLAN</button>
+  <button onclick="showTab('pdf',this)">📚 PDF SYSTEM</button>
+  <button onclick="showTab('calc',this)">🧮 CALCULATION</button>
 </div>
-<div id="footer"><div style="display:flex;justify-content:space-between;font-size:10px"><span>STEEL CUTTING</span><span id="stageTxt">STAGE 0</span><span>DELIVERY</span></div><input type="range" id="slider" min="0" max="12" value="0"></div>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-let scene,camera,renderer,controls,ship,craneHook,water,cut=false,wire=false,curStage=0,curVessel='CONTAINER',animating=false;
-let vp=document.getElementById('vp');
-scene=new THREE.Scene(); scene.background=new THREE.Color(0x000510);
-// FIXED CAMERA - YouTube jaisa, hilta nahi, side se, thoda upar se
-camera=new THREE.PerspectiveCamera(42, vp.clientWidth/vp.clientHeight, 0.1, 500);
-camera.position.set(0, 3.5, 13.5); camera.lookAt(0,0,0);
-renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(vp.clientWidth,vp.clientHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.toneMapping=THREE.ACESFilmicToneMapping; vp.appendChild(renderer.domElement);
-scene.add(new THREE.AmbientLight(0x88ccff,0.9));
-let sun=new THREE.DirectionalLight(0xffffff,2.2); sun.position.set(8,15,10); scene.add(sun);
-let rim=new THREE.DirectionalLight(0x00ffff,1.2); rim.position.set(-10,5,-10); scene.add(rim);
-let grid=new THREE.GridHelper(40,40,0x004466,0x001122); grid.position.y=-2.2; scene.add(grid);
-// DRY DOCK WALLS - YouTube wala dock
-let dockMat=new THREE.MeshStandardMaterial({color:0x555555,roughness:0.9});
-let dockL=new THREE.Mesh(new THREE.BoxGeometry(0.5,3,18),dockMat); dockL.position.set(-5,-1,0); scene.add(dockL);
-let dockR=new THREE.Mesh(new THREE.BoxGeometry(0.5,3,18),dockMat); dockR.position.set(5,-1,0); scene.add(dockR);
-// GANTRY CRANE - Red White - YouTube jaisa
-let crane=new THREE.Group();
-let cMat=new THREE.MeshStandardMaterial({color:0xff2200,metalness:0.6,roughness:0.4});
-let cMatW=new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.4,roughness:0.5});
-let leg1=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4),cMat); leg1.position.set(-4.5,1,0); crane.add(leg1);
-let leg2=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4),cMat); leg2.position.set(4.5,1,0); crane.add(leg2);
-let beam=new THREE.Mesh(new THREE.BoxGeometry(9.5,0.6,0.6),cMatW); beam.position.set(0,4.2,0); crane.add(beam);
-let hookMat=new THREE.MeshStandardMaterial({color:0xffff00});
-craneHook=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3),hookMat); craneHook.position.set(0,3.8,0); crane.add(craneHook);
-let cable=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1,6),new THREE.MeshBasicMaterial({color:0xffffff})); cable.position.set(0,3.8,0); crane.add(cable);
-scene.add(crane);
-// WATER - Float-Out ke liye, shuru me neeche
-water=new THREE.Mesh(new THREE.BoxGeometry(9.5,0.1,17), new THREE.MeshStandardMaterial({color:0x0066ff,transparent:true,opacity:0.7})); water.position.set(0,-2.15,0); scene.add(water);
-// SPARKS - Welding sparks
-let sparks=[];
-for(let i=0;i<40;i++){ let s=new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), new THREE.MeshBasicMaterial({color:0xffaa00})); s.position.set((Math.random()-0.5)*10,-1.5,(Math.random()-0.5)*2); scene.add(s); sparks.push(s); }
 
-controls=new OrbitControls(camera,renderer.domElement); controls.target.set(0,0,0); controls.enableDamping=true; controls.minDistance=6; controls.maxDistance=18; controls.maxPolarAngle=Math.PI*0.55; controls.update();
-ship=new THREE.Group(); scene.add(ship);
+<div class="container">
 
-let stages=[
-{t:"0: STEEL CUTTING",d:"CNC Plasma - 12,000 Plates -> 120,000 Pieces"},
-{t:"1: KEEL LAYING",d:"Keel 200m - First Block Dry Dock me"},
-{t:"2: FRAMES - SKELETON",d:"51 Frames, Spacing 2.5m, Honeycomb jaisa"},
-{t:"3: DOUBLE BOTTOM",d:"Ballast + Fuel Tanks - Neeche ka hissa"},
-{t:"4: HULL SIDE PLATES",d:"Side Plates 18mm - Crane se Block aaya"},
-{t:"5: BULBOUS BOW",d:"Bow 2.8m - Aage ka Block"},
-{t:"6: STERN + RUDDER + PROP",d:"Stern Block - Rudder, 5-Blade Prop"},
-{t:"7: MAIN DECK + BULKHEADS",d:"Deck 40T/m2, Watertight Bulkheads"},
-{t:"8: ENGINE ROOM",d:"MAN 8000kW - Engine Block Crane se"},
-{t:"9: ACCOMMODATION - LEGO",d:"5 Floors Apartment Block - Ek saath lift hua"},
-{t:"10: BRIDGE + FUNNEL",d:"Wheelhouse + Funnel"},
-{t:"11: CARGO",d:"Containers / Tanks / Cars - Vessel ke hisab se"},
-{t:"12: FLOAT-OUT + DELIVERY",d:"Dock me Paani - Ship Tair gaya!"},
-];
-function mat(c,m=0.7,r=0.35){ return new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r}); }
-function addBox(w,h,d,pos,color,info){
-  let g=new THREE.BoxGeometry(w,h,d); let m=new THREE.Mesh(g,mat(color)); m.position.set(...pos); m.userData={info}; ship.add(m);
-  let e=new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color:0x00ffff,transparent:true,opacity:0.3})); e.position.copy(m.position); ship.add(e); return m;
-}
-function addCyl(rt,rb,h,pos,color,rot=[0,0,0]){ let m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,16),mat(color)); m.position.set(...pos); m.rotation.set(...rot); ship.add(m); return m; }
-function addSphere(r,pos,color){ let m=new THREE.Mesh(new THREE.SphereGeometry(r,20,20),mat(color)); m.position.set(...pos); ship.add(m); return m; }
+  <!-- ============ SHIP VIEW ============ -->
+  <div id="tab-ship">
+    <div class="ship-stage">
+      <!-- HOLOGRAM SHIP SVG -->
+      <svg viewBox="0 0 1000 420" width="100%" style="display:block">
+        <!-- Hull -->
+        <polygon points="40,200 120,160 820,160 920,200 980,260 920,330 150,330 60,300 40,260" fill="none" stroke="#00ffff" stroke-width="3"/>
+        <!-- Deck lines -->
+        <line x1="40" y1="230" x2="980" y2="230" stroke="#00ffff" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
+        <line x1="40" y1="290" x2="920" y2="290" stroke="#00ffff" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
+        <!-- Frames -->
+        <g stroke="#00ffff" stroke-width="1" opacity="0.4">
+          <line x1="200" y1="170" x2="200" y2="325"/><line x1="350" y1="170" x2="350" y2="325"/>
+          <line x1="500" y1="170" x2="500" y2="325"/><line x1="650" y1="170" x2="650" y2="325"/>
+          <line x1="780" y1="170" x2="780" y2="325"/>
+        </g>
 
-function build(s){
-  ship.clear();
-  // CRANE HOOK - Stage ke hisab se upar-neeche, LEGO block laya
-  craneHook.position.x = Math.sin(s*0.8)*3; craneHook.position.y = 3.8 - (s%2)*0.5;
-  if(s>=1) addBox(12,0.35,0.4,[0,-1.5,0],0xff2200,"KEEL 200m");
-  if(s>=2) for(let i=-5;i<=5;i++) { let f=new THREE.Mesh(new THREE.TorusGeometry(1.15,0.07,8,20,Math.PI),mat(0xcccccc)); f.position.set(i*1.1,-0.6,0); f.rotation.y=Math.PI/2; ship.add(f); }
-  if(s>=3) addBox(10,0.4,1.4,[0,-1.2,0],0x0066aa,"DOUBLE BOTTOM - Ballast/Fuel");
-  if(s>=4){ // Hull - Real shape, Extrude se
-    let shape=new THREE.Shape(); shape.moveTo(-6,-0.5); shape.lineTo(5,-0.5); shape.quadraticCurveTo(6.6,-0.3,6.8,0.3); shape.lineTo(6.2,1.1); shape.lineTo(-6,1.1); shape.quadraticCurveTo(-6.5,0,-6,-0.5);
-    let hg=new THREE.ExtrudeGeometry(shape,{depth:1.6,bevelEnabled:true,bevelThickness:0.12,bevelSize:0.12,bevelSegments:2});
-    let hull=new THREE.Mesh(hg,mat(curVessel=='TANKER'?0x882200:curVessel=='LNG'?0xdddddd:0x0033aa,0.7,0.3)); hull.rotation.y=Math.PI/2; hull.position.set(0,0,-0.8); ship.add(hull);
-  }
-  if(s>=5) addSphere(0.45,[6.5,-1,0],0x00ffff);
-  if(s>=6){ addBox(0.3,1.8,0.2,[-6.4,0,0],0x333333,"RUDDER"); addCyl(0.65,0.65,0.15,[-7.1,-0.5,0],0xffaa00,[0,0,Math.PI/2]); }
-  if(s>=7){ addBox(11,0.15,1.8,[0,1.1,0],0xaaaaaa,"MAIN DECK 40T/m2"); for(let i=-4;i<=4;i+=2) addBox(0.12,1.8,1.6,[i,0.2,0],0x555555,"BULKHEAD A-60"); }
-  if(s>=8){ addBox(2.2,1.2,1,[-2.5,0.2,0],0x444444,"MAIN ENGINE MAN 8000kW"); addBox(1,0.8,0.8,[-1,1,0.4],0xcccccc,"GEN 1500kW"); addBox(1.2,1,1,[-1.5,1.6,0],0x00ffaa,"ECR CONTROL ROOM"); addCyl(0.05,0.05,3,[-2,0.5,0.3],0xff0000,[0,0,0.5]); addCyl(0.05,0.05,3,[-2,0.5,-0.3],0x0000ff,[0,0,0.5]); }
-  if(s>=9){ addBox(2.2,2.2,1.4,[-4.2,2.4,0],0xffffff,"ACCOM 5 FLOORS - Apartment"); }
-  if(s>=10){ addBox(1.8,0.8,1.1,[-4.2,3.9,0],0xffffff,"BRIDGE"); addCyl(0.35,0.45,1,[-3,3,0],0x333333); }
-  if(s>=11){
-    if(curVessel=='CONTAINER') for(let i=0;i<6;i++) for(let h=0;h<2;h++) addBox(0.9,0.45,0.45,[-2+i*1.05,1.8+h*0.5,0],h?0x00ff88:0x0088ff,"CONTAINER 20ft");
-    if(curVessel=='TANKER') for(let i=0;i<3;i++) addCyl(0.6,0.6,1.5,[-3+i*2,1.7,0],0xff8800,[0,0,Math.PI/2]);
-    if(curVessel=='LNG') for(let i=0;i<3;i++) addSphere(0.7,[-3+i*2.5,1.9,0],0xffffff);
-    if(curVessel=='BULK') for(let i=0;i<3;i++) addBox(1.8,0.7,1.2,[-3+i*2.2,1.6,0],0x8B4513,"BULK HOLD");
-    if(curVessel=='RORO') addBox(8,0.6,1.4,[0,1.6,0],0xffffff,"CAR DECK");
-    if(curVessel=='CRUISE') for(let i=0;i<4;i++) addBox(8,0.2,1.4,[0,1.7+i*0.35,0],0xffffff,"CRUISE DECK");
-  }
-  if(s>=12){ water.position.y=-0.8; document.getElementById('waterTag').style.display='block'; ship.position.y=0.6; }
-  else { water.position.y=-2.15; document.getElementById('waterTag').style.display='none'; ship.position.y=0; }
-  if(cut) ship.children.forEach(m=>{ if(m.position.x>0) { m.material.transparent=true; m.material.opacity=0.3; } });
-  if(wire) ship.children.forEach(m=>{ if(m.material) m.material.wireframe=true; });
-  // CENTER FIX - Ship hamesha centre me
-  let box=new THREE.Box3().setFromObject(ship); if(!box.isEmpty()){ let c=box.getCenter(new THREE.Vector3()); ship.position.x-=c.x; ship.position.z-=c.z; }
-  document.getElementById('stageTxt').innerText=stages[s].t;
-  document.getElementById('hud').innerHTML=`<b>${stages[s].t}</b><br>${stages[s].d}<br>VESSEL: ${curVessel} | FIXED CAMERA - SIDE VIEW<br>Crane se Block aaya | Tap Part for Details`;
-  updateLists();
+        <!-- CARGO HOLD - Clickable -->
+        <g class="part" onclick="showDetail('cargo')">
+          <rect x="220" y="235" width="280" height="50" fill="#00ffff" opacity="0.08" stroke="#00ffff" stroke-width="1"/>
+          <text x="360" y="265" text-anchor="middle" class="label">CARGO HOLD</text>
+        </g>
+
+        <!-- DOUBLE BOTTOM -->
+        <g class="part" onclick="showDetail('doublebottom')">
+          <rect x="150" y="295" width="500" height="30" fill="#00ffff" opacity="0.12"/>
+          <text x="400" y="315" text-anchor="middle" class="label-cyan">DOUBLE BOTTOM TANK - Ballast / Fuel - 1.5m</text>
+        </g>
+
+        <!-- ENGINE ROOM -->
+        <g class="part" onclick="showDetail('engine')">
+          <rect x="540" y="235" width="120" height="55" fill="none" stroke="#ff00ff" stroke-width="2"/>
+          <text x="600" y="267" text-anchor="middle" class="label-pink">ENGINE ROOM</text>
+        </g>
+
+        <!-- EMERGENCY FIRE PUMP -->
+        <g class="part" onclick="showDetail('emg')">
+          <circle cx="720" cy="310" r="18" fill="#00ff00"/>
+          <text x="720" y="315" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">EMG</text>
+          <text x="720" y="350" text-anchor="middle" class="label-green">EMERGENCY FIRE PUMP</text>
+          <text x="720" y="365" text-anchor="middle" class="label-green">Fore Peak - Away from E/R</text>
+        </g>
+
+        <!-- BOW THRUSTER -->
+        <g class="part" onclick="showDetail('bow')">
+          <circle cx="900" cy="310" r="18" fill="#ffff00"/>
+          <text x="900" y="315" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">BT</text>
+          <text x="900" y="350" text-anchor="middle" class="label-yellow">BOW THRUSTER</text>
+        </g>
+
+        <!-- ACCOMMODATION -->
+        <g class="part" onclick="showDetail('accom')">
+          <rect x="750" y="40" width="180" height="120" fill="none" stroke="#00ffff" stroke-width="2"/>
+          <text x="840" y="95" text-anchor="middle" class="label-cyan">ACCOMMODATION</text>
+          <text x="840" y="115" text-anchor="middle" class="label">Bridge + Crew</text>
+          <text x="840" y="132" text-anchor="middle" class="label">Fire Station</text>
+        </g>
+        <!-- Funnel -->
+        <rect x="810" y="15" width="50" height="25" fill="#00ffff" opacity="0.3"/>
+      </svg>
+      <p class="hint">👆 Ship ke kisi bhi part pe tap karo - uska full detail neeche khulega</p>
+    </div>
+
+    <!-- Detail Panel -->
+    <div id="detailBox" class="detail">
+      <h2 id="dTitle">Part Name <span id="dSub"></span></h2>
+      <p id="dDesc"></p>
+      <div class="tags" id="dTags"></div>
+      <p id="dPdf" style="color:#00ffff;font-size:13px"></p>
+    </div>
+
+    <!-- Quick Cards -->
+    <div class="grid">
+      <div class="card" onclick="showDetail('cargo')"><h3>📦 Cargo Hold</h3><p><b>PDF Ch.10</b> - Longitudinal Framing, Hatch Covers, Transverse Bulkhead</p></div>
+      <div class="card" onclick="showDetail('doublebottom')"><h3>⬇️ Double Bottom</h3><p><b>PDF Ch.7-8</b> - Tank Top, Ballast Tank, Fuel Tank, Height 1.5m</p></div>
+      <div class="card" onclick="showDetail('engine')"><h3>⚙️ Engine Room</h3><p><b>PDF Ch.20</b> - Main Engine, Normal Fire Pump, Shaft Tunnel</p></div>
+      <div class="card" onclick="showDetail('emg')"><h3>🟢 Emergency Fire Pump</h3><p><b>Photo 4</b> - Fore Peak me, Engine Room se door, Bridge se control</p></div>
+      <div class="card" onclick="showDetail('bow')"><h3>🟡 Bow Thruster</h3><p><b>Photo 4</b> - Fore Peak Tank me, Ship ko Left-Right karne ke liye</p></div>
+      <div class="card" onclick="showDetail('accom')"><h3>🏠 Accommodation</h3><p><b>Photo 1-2</b> - Bridge, Crew Cabins, Fire Station, A-Class Division</p></div>
+    </div>
+  </div>
+
+  <!-- ============ FIRE PLAN ============ -->
+  <div id="tab-fire" style="display:none">
+    <div class="legend">
+      <div class="red">🔴 RED = Fire - Extinguisher / Hydrant / Fire Station</div>
+      <div class="green">🟢 GREEN = Safety - Life Jacket / Life Buoy / Escape</div>
+      <div>🔵 CYAN = Structure</div>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>🔥 Fire Control Plan - SOLAS</h3><p>SOLAS Ch. II-2 / 15.2.4 - Har deck pe permanently laga hona chahiye. Bridge, Accommodation, Engine Room + Deckhouse ke bahar weathertight box me shore fire-fighters ke liye.</p></div>
+      <div class="card"><h3>🟢 Safety Equipment</h3><p>Life Jacket, Life Buoy with 30m rope, Immersion Suit, Medical Chest, Emergency Escape, Muster Station</p></div>
+      <div class="card"><h3>🔴 Fire Equipment</h3><p>Fire Extinguisher, Fire Hose, Hydrant, Fire Damper, Fire Door, CO2 Room, Fireman Outfit</p></div>
+      <div class="card"><h3>⚠️ Symbols - IMO A.952(23)</h3><p>Saare symbols IMO Resolution A.952(23) aur A.654(16) ke hisaab se hone chahiye. Language - English + Crew Working Language.</p></div>
+    </div>
+  </div>
+
+  <!-- ============ PDF SYSTEM ============ -->
+  <div id="tab-pdf" style="display:none">
+    <div class="grid">
+      <div class="card"><h3>📘 1. Ship Construction - Eyres 6th Ed.</h3><p>363 Pages - Design Spiral, Dimensions, Steel, Welding, Shipyard, Structure, Tanker, LNG/LPG</p></div>
+      <div class="card"><h3>📗 2. Ship Construction - Bruce & Eyres 7th Ed. (2012)</h3><p>32 Chapters, 7 Sections - Updated version, 2012 tak ke naye rules</p></div>
+      <div class="card"><h3>📕 3. DNV Fire Safety Rules Pt.4 Ch.10</h3><p>Fire Control Plan ka full rule - A/B Class Division, Detection, Alarm, Sprinkler</p></div>
+      <div class="card"><h3>📙 4. MRE 522 Shipyard Technology</h3><p>Steel Cutting → Block Fabrication → Erection → Launching</p></div>
+    </div>
+  </div>
+
+  <!-- ============ CALCULATION ============ -->
+  <div id="tab-calc" style="display:none">
+    <div style="border:1px solid #00ffff44;border-radius:14px;padding:16px;background:#000a0a">
+      <h3 style="color:#fff">🧮 Ship Design Calculator - PDF Ch.2 Formula</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <label style="color:#aaa;font-size:13px">LBP (m)<br><input id="lbp" type="number" value="95" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
+        <label style="color:#aaa;font-size:13px">Beam B (m)<br><input id="beam" type="number" value="18" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
+        <label style="color:#aaa;font-size:13px">Draft (m)<br><input id="draft" type="number" value="6" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
+        <label style="color:#aaa;font-size:13px">Block Coeff. Cb<br><input id="cb" type="number" step="0.01" value="0.75" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
+      </div>
+      <button onclick="calc()" style="margin-top:14px;width:100%;padding:12px;background:#00ffff;color:#000;border:none;border-radius:10px;font-weight:bold;cursor:pointer">CALCULATE DISPLACEMENT</button>
+      <p id="calcResult" style="margin-top:12px;color:#00ff00;font-weight:bold;text-align:center"></p>
+      <p style="color:#888;font-size:12px;margin-top:8px;text-align:center">Formula: Displacement = L × B × Draft × Cb × 1.025</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>HOLOGRAM SHIP - Construction System | PDF: Eyres Ship Construction | SOLAS Ch. II-2 | IMO A.952(23) | GitHub Pages Ready</footer>
+
+<script>
+const DATA = {
+  cargo:{title:'Cargo Hold',sub:'PDF Ch.10 | Photo 2',desc:'Cargo rakhne ki jagah. Isme Longitudinal Framing + Transverse Bulkhead hota hai. Upar Hatch Covers hote hai jo cargo ko paani se bachate hai. Tanker me yaha Oil Tank hota hai, Bulk Carrier me Hold.',tags:['Longitudinal Framing','Hatch Cover','Transverse Bulkhead'],pdf:'📚 PDF: Chapter 10 - Decks, Hatches & Cargo Handling'},
+  doublebottom:{title:'Double Bottom Tank',sub:'PDF Ch.7-8',desc:'Ship ke neeche 2 layer wala bottom. Beech me Ballast Water ya Fuel Oil bhara jata hai. Height 1.5m. Grounding hone pe pehla bottom phatne pe bhi ship nahi doobta, dusra bottom bachata hai. Iske upar Tank Top hota hai.',tags:['Ballast Tank','Fuel Tank','Tank Top - 1.5m'],pdf:'📚 PDF: Chapter 7-8 - Bottom Structure'},
+  engine:{title:'Engine Room',sub:'PDF Ch.20 | Pink Zone',desc:'Ship ka dil. Yaha Main Engine, Generator, Normal Fire Pump hota hai. Agar yaha aag lagi to Normal Fire Pump kaam nahi karega, isliye Emergency Fire Pump ko alag rakha jata hai.',tags:['Main Engine','Normal Fire Pump','Shaft Tunnel'],pdf:'📚 PDF: Chapter 20 - Machinery'},
+  emg:{title:'Emergency Fire Pump',sub:'Photo 4 | SOLAS Rule',desc:'Sabse important safety part. Ye Fore Peak Tank me, Engine Room se bahut door, alag watertight compartment me hota hai. Iska control Bridge se bhi hota hai. Engine Room me aag lagne pe bhi ye pump chalega aur paani dega.',tags:['Fore Peak','Watertight','Bridge Remote Control'],pdf:'📚 Photo 4 + SOLAS Ch. II-2 / 15.2.4'},
+  bow:{title:'Bow Thruster',sub:'Photo 4 | Fore Peak',desc:'Ship ke sabse aage, Fore Peak Tank me laga chhota propeller. Ye side me paani dhakel ke ship ko left-right karta hai, bina tug ke port me ghoomane ke liye. 36ft depth wale tank me laga hota hai.',tags:['Fore Peak Tank','Manoeuvring','Port Entry'],pdf:'📚 Photo 4 - Bow Thruster Detail'},
+  accom:{title:'Accommodation Block',sub:'Photo 1-2 | Red Zone',desc:'Crew rehne ki jagah - Bridge, Cabins, Galley, Fire Station. Ye A-Class Division se bana hota hai taaki aag 60 min tak na phaile. Fire Plan me isko Laal colour se dikhaya jata hai kyunki yaha sabse zyada jaan ka khatra hai.',tags:['Bridge','Crew Cabins','Fire Station','A-Class Division'],pdf:'📚 Photo 1-2 + PDF Chapter 12'}
+};
+function showDetail(key){
+  const d = DATA[key];
+  if(!d) return;
+  document.getElementById('detailBox').classList.add('show');
+  document.getElementById('dTitle').innerHTML = d.title + ' <span>'+d.sub+'</span>';
+  document.getElementById('dDesc').innerText = d.desc;
+  document.getElementById('dPdf').innerText = d.pdf;
+  document.getElementById('dTags').innerHTML = d.tags.map(t=>'<span class="tag">'+t+'</span>').join('');
+  document.getElementById('detailBox').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
-function updateLists(){
-  document.getElementById('blockList').innerHTML=`<div class="stage" onclick="setStage(5)">BLOCK 1 - BOW<br>Keel, Stem, Bulbous Bow</div><div class="stage" onclick="setStage(7)">BLOCK 2 - CENTRE<br>Holds, Double Bottom</div><div class="stage" onclick="setStage(9)">BLOCK 3 - ACCOM<br>Apartment, Cabins</div><div class="stage" onclick="setStage(8)">BLOCK 4 - ENGINE<br>Engine + Pipes</div><div class="stage" onclick="setStage(6)">BLOCK 5 - STERN<br>Rudder, Prop, Poop</div>`;
-  let h=""; stages.forEach((st,i)=>{ h+=`<div class="stage ${i==curStage?'active':''}" onclick="setStage(${i})">${st.t}</div>`; }); document.getElementById('stageList').innerHTML=h;
+function showTab(id,btn){
+  ['ship','fire','pdf','calc'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = (t===id?'block':'none');
+  });
+  document.querySelectorAll('.top-bar button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
-window.setStage=(s)=>{ curStage=s; document.getElementById('slider').value=s; build(s); };
-window.setVessel=(v)=>{ curVessel=v; document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active')); build(curStage); };
-window.toggleCut=()=>{ cut=!cut; build(curStage); };
-window.toggleWire=()=>{ wire=!wire; build(curStage); };
-window.floatOut=()=>{ setStage(12); let y=-2.15; let iv=setInterval(()=>{ y+=0.05; water.position.y=y; ship.position.y+=0.02; if(y>=-0.8) clearInterval(iv); },50); };
-window.playBuild=()=>{ if(animating) return; animating=true; let i=0; let iv=setInterval(()=>{ setStage(i); i++; if(i>12){ clearInterval(iv); animating=false; } },1100); };
-document.getElementById('slider').addEventListener('input',e=>setStage(parseInt(e.target.value)));
-window.addEventListener('resize',()=>{ renderer.setSize(vp.clientWidth,vp.clientHeight); camera.aspect=vp.clientWidth/vp.clientHeight; camera.updateProjectionMatrix(); });
-(function anim(){ requestAnimationFrame(anim); sparks.forEach((s,i)=>{ s.position.y+=0.02; s.position.x+=(Math.random()-0.5)*0.05; if(s.position.y>0) s.position.y=-1.5; }); craneHook.rotation.y+=0.01; controls.update(); renderer.render(scene,camera); })();
-build(0);
-</script>
-</body>
-</html>
+function calc(){
+  const L=parseFloat(document.getElementById('lbp').value);
+  const B=parseFloat(document.getElementById('beam').value);
+  const T=parseFloat(document.getElementById('draft').value);
+  const Cb=parseFloat(document.getElementById('cb').value);
+  const disp = L*B*T*Cb*1.025;
+  document.getElementById('calcResult').innerText = 'Displacement = '+disp.toFixed(0)+' Tonnes | Freeboard = Depth - Draft';
+}
+//
