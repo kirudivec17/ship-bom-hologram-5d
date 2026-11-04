@@ -3,236 +3,546 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOLOGRAM SHIP - Construction System</title>
+<title>HOLOGRAM SHIP - Advanced Naval Architecture & Fire Plan System</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
-  body{background:#000;color:#00ffff;overflow-x:hidden;min-height:100vh}
-  /* Hologram glow effect */
-  .glow{text-shadow:0 0 10px #00ffff,0 0 20px #00ffff,0 0 30px #00ffff}
-  header{text-align:center;padding:18px 10px;border-bottom:1px solid #00ffff33}
-  header h1{font-size:22px;letter-spacing:2px}
-  header p{color:#fff;font-size:12px;margin-top:6px;letter-spacing:1px}
-  .top-bar{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;padding:12px}
-  .top-bar button{background:transparent;border:1px solid #00ffff;color:#00ffff;padding:8px 14px;border-radius:20px;cursor:pointer;font-weight:bold}
-  .top-bar button.active,.top-bar button:hover{background:#00ffff;color:#000;box-shadow:0 0 15px #00ffff}
-  .container{max-width:1100px;margin:0 auto;padding:14px}
-  /* Ship SVG Area */
-  .ship-stage{position:relative;background:radial-gradient(ellipse at center,#001a1a 0%,#000 70%);border:1px solid #00ffff66;border-radius:16px;padding:20px;overflow:hidden}
-  .ship-stage::before{content:'';position:absolute;left:10%;right:10%;bottom:18px;height:2px;background:#00ffff55;box-shadow:0 0 10px #00ffff}
-  .hint{text-align:center;color:#aaa;font-size:12px;margin:10px 0}
-  /* Ship Parts - Clickable */
-  .part{cursor:pointer;transition:0.2s}
-  .part:hover{filter:drop-shadow(0 0 8px #00ffff)}
-  .part.active{filter:drop-shadow(0 0 12px #ffff00)}
-  .label{fill:#fff;font-size:11px;font-weight:600;pointer-events:none}
-  .label-cyan{fill:#00ffff;font-size:11px;font-weight:700;pointer-events:none}
-  .label-green{fill:#00ff00;font-size:10px;font-weight:700;pointer-events:none}
-  .label-yellow{fill:#ffff00;font-size:10px;font-weight:700;pointer-events:none}
-  .label-pink{fill:#ff00ff;font-size:10px;font-weight:700;pointer-events:none}
+  :root {
+    --cyan-glow: #00f3ff;
+    --cyan-dim: rgba(0, 243, 255, 0.2);
+    --yellow-glow: #ffd700;
+    --pink-glow: #ff0055;
+    --green-glow: #00ff66;
+    --bg-dark: #030a10;
+    --panel-bg: rgba(4, 20, 32, 0.85);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  body { background-color: var(--bg-dark); color: var(--cyan-glow); min-height: 100vh; overflow-x: hidden; }
+
+  /* Grid & Scanline Background */
+  .bg-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: 
+      linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none; z-index: 0;
+  }
+
+  .scanline {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.3) 51%);
+    background-size: 100% 4px; pointer-events: none; z-index: 1; opacity: 0.6;
+  }
+
+  .glow-text { text-shadow: 0 0 10px var(--cyan-glow), 0 0 20px rgba(0, 243, 255, 0.5); }
+
+  header {
+    position: relative; z-index: 2; text-align: center; padding: 20px 10px 15px;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.3); background: rgba(0, 10, 20, 0.8);
+  }
+  header h1 { font-size: 24px; letter-spacing: 3px; font-weight: 800; color: #fff; }
+  header p { color: #8ab4f8; font-size: 13px; margin-top: 6px; letter-spacing: 1px; }
+
+  .top-bar {
+    position: relative; z-index: 2; display: flex; justify-content: center; gap: 10px;
+    flex-wrap: wrap; padding: 15px; background: rgba(2, 14, 24, 0.6);
+  }
+  .top-bar button {
+    background: rgba(0, 243, 255, 0.05); border: 1px solid var(--cyan-glow);
+    color: var(--cyan-glow); padding: 10px 18px; border-radius: 4px; cursor: pointer;
+    font-weight: 700; font-size: 12px; letter-spacing: 1px; transition: all 0.3s ease;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  }
+  .top-bar button.active, .top-bar button:hover {
+    background: var(--cyan-glow); color: #000; box-shadow: 0 0 20px var(--cyan-glow);
+  }
+
+  .container { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 15px; }
+
+  /* Hologram Ship Stage */
+  .ship-stage {
+    position: relative; background: radial-gradient(circle at 50% 40%, rgba(0, 40, 60, 0.6) 0%, rgba(1, 10, 18, 0.95) 80%);
+    border: 1px solid rgba(0, 243, 255, 0.4); border-radius: 8px; padding: 25px 15px 15px;
+    box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.1), 0 0 25px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Sea Line Animation */
+  .water-line {
+    position: absolute; left: 2%; right: 2%; bottom: 48px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan-glow), transparent);
+    box-shadow: 0 0 12px var(--cyan-glow); opacity: 0.7;
+  }
+
+  /* SVG Structural Styling */
+  .hull-outline { fill: none; stroke: var(--cyan-glow); stroke-width: 2.5; filter: drop-shadow(0 0 5px var(--cyan-glow)); }
+  .frame-line { stroke: rgba(0, 243, 255, 0.25); stroke-width: 1; stroke-dasharray: 4 3; }
+  .waterline-mark { stroke: #ff4444; stroke-width: 1.5; stroke-dasharray: 6 4; opacity: 0.8; }
+  
+  /* Part Interactions */
+  .part { cursor: pointer; transition: all 0.3s; }
+  .part path, .part rect, .part polygon { transition: all 0.3s; }
+  .part:hover path, .part:hover rect, .part:hover polygon { fill: rgba(0, 243, 255, 0.25) !important; stroke: #fff !important; filter: drop-shadow(0 0 10px var(--cyan-glow)); }
+  .part.active path, .part.active rect, .part.active polygon { fill: rgba(255, 215, 0, 0.3) !important; stroke: var(--yellow-glow) !important; filter: drop-shadow(0 0 12px var(--yellow-glow)); }
+
+  /* SVG Text Styling */
+  .svg-title { fill: #ffffff; font-size: 11px; font-weight: 700; pointer-events: none; text-shadow: 0 0 4px #000; }
+  .svg-sub { fill: var(--cyan-glow); font-size: 9px; font-weight: 600; pointer-events: none; }
+
+  .hint { text-align: center; color: #8ab4f8; font-size: 12px; margin-top: 12px; letter-spacing: 0.5px; }
+
   /* Detail Panel */
-  .detail{display:none;margin-top:14px;border:1px solid #00ffff;border-radius:14px;padding:16px;background:#001111}
-  .detail.show{display:block;animation:fade .3s}
-  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .detail h2{font-size:20px;color:#fff}
-  .detail h2 span{color:#00ffff;font-size:13px}
-  .detail p{color:#ddd;font-size:14px;line-height:1.6;margin-top:8px}
-  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .tag{border:1px solid #00ffff55;padding:5px 10px;border-radius:20px;font-size:12px;color:#00ffff}
-  .tag.green{border-color:#00ff00;color:#00ff00}
-  .tag.yellow{border-color:#ffff00;color:#ffff00}
-  .tag.pink{border-color:#ff00ff;color:#ff00ff}
-  .tag.red{border-color:#ff4444;color:#ff4444}
+  .detail {
+    display: none; margin-top: 20px; border: 1px solid var(--cyan-glow);
+    border-radius: 6px; padding: 20px; background: var(--panel-bg);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.15); backdrop-filter: blur(5px);
+  }
+  .detail.show { display: block; animation: slideUp 0.3s cubic-bezier(0.1, 0.9, 0.2, 1); }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+  .detail-header { display: flex; justify-shadow: space-between; align-items: center; border-bottom: 1px solid rgba(0, 243, 255, 0.2); padding-bottom: 10px; margin-bottom: 12px; }
+  .detail h2 { font-size: 20px; color: #fff; letter-spacing: 1px; }
+  .detail h2 span { color: var(--cyan-glow); font-size: 13px; font-weight: 400; margin-left: 10px; }
+  .detail p { color: #d0e0f0; font-size: 14px; line-height: 1.6; margin-top: 8px; }
+
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .tag { border: 1px solid var(--cyan-glow); padding: 4px 10px; border-radius: 3px; font-size: 11px; color: var(--cyan-glow); background: rgba(0, 243, 255, 0.05); }
+  .tag.green { border-color: var(--green-glow); color: var(--green-glow); background: rgba(0, 255, 102, 0.05); }
+  .tag.yellow { border-color: var(--yellow-glow); color: var(--yellow-glow); background: rgba(255, 215, 0, 0.05); }
+  .tag.pink { border-color: var(--pink-glow); color: var(--pink-glow); background: rgba(255, 0, 85, 0.05); }
+
   /* Cards Grid */
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:16px}
-  .card{border:1px solid #00ffff44;border-radius:14px;padding:14px;background:#000a0a;cursor:pointer}
-  .card:hover{border-color:#00ffff;box-shadow:0 0 15px #00ffff44}
-  .card h3{font-size:15px;color:#fff}
-  .card p{font-size:13px;color:#bbb;line-height:1.5;margin-top:6px}
-  .card b{color:#00ffff}
-  /* Fire Plan Legend */
-  .legend{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:14px 0}
-  .legend div{font-size:12px;border:1px solid #333;padding:6px 10px;border-radius:20px}
-  .red{color:#ff4444;border-color:#ff4444!important}
-  .green{color:#00ff00;border-color:#00ff00!important}
-  footer{text-align:center;padding:20px;color:#666;font-size:12px}
-  @media(max-width:600px){header h1{font-size:18px}}
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; margin-top: 20px; }
+  .card {
+    border: 1px solid rgba(0, 243, 255, 0.2); border-radius: 6px; padding: 16px;
+    background: rgba(2, 16, 28, 0.7); cursor: pointer; transition: all 0.3s;
+  }
+  .card:hover { border-color: var(--cyan-glow); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 243, 255, 0.2); }
+  .card h3 { font-size: 16px; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .card p { font-size: 13px; color: #9aa0a6; line-height: 1.5; }
+  .card b { color: var(--cyan-glow); }
+
+  /* Fire Plan Legend & Tables */
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+  .legend div { font-size: 12px; border: 1px solid #333; padding: 6px 14px; border-radius: 4px; background: rgba(0,0,0,0.5); }
+  .legend .red { color: #ff5252; border-color: #ff5252; }
+  .legend .green { color: var(--green-glow); border-color: var(--green-glow); }
+  .legend .yellow { color: var(--yellow-glow); border-color: var(--yellow-glow); }
+
+  /* Forms and Inputs */
+  .calc-box { border: 1px solid rgba(0, 243, 255, 0.3); border-radius: 6px; padding: 20px; background: var(--panel-bg); }
+  .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-group label { color: #8ab4f8; font-size: 12px; font-weight: 600; }
+  .input-group input {
+    background: #010d18; border: 1px solid rgba(0, 243, 255, 0.4); color: #fff;
+    padding: 10px; border-radius: 4px; outline: none; font-size: 14px;
+  }
+  .input-group input:focus { border-color: var(--cyan-glow); box-shadow: 0 0 8px var(--cyan-glow); }
+  .btn-calc {
+    margin-top: 18px; width: 100%; padding: 12px; background: var(--cyan-glow);
+    color: #000; border: none; border-radius: 4px; font-weight: 800; font-size: 13px;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.3s;
+  }
+  .btn-calc:hover { background: #fff; box-shadow: 0 0 15px #fff; }
+
+  footer { text-align: center; padding: 25px; color: #5f6368; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 30px; }
+
+  @media(max-width: 768px) {
+    header h1 { font-size: 18px; }
+    .top-bar button { padding: 8px 12px; font-size: 11px; }
+  }
 </style>
 </head>
 <body>
 
+<div class="bg-overlay"></div>
+<div class="scanline"></div>
+
 <header>
-  <h1 class="glow">HOLOGRAM SHIP - CONSTRUCTION SYSTEM</h1>
-  <p>PDF + PHOTOS + FIRE PLAN | Tap Any Part To See Details | SOLAS Ch. II-2</p>
+  <h1 class="glow-text">NAVAL ARCHITECTURE - SHIP CONSTRUCTION & FIRE PLAN</h1>
+  <p>SOLAS Ch. II-2 | IMO Resolutions | Eyres Ship Construction (7th Ed.) | Interactive Hologram</p>
 </header>
 
 <div class="top-bar">
-  <button class="active" onclick="showTab('ship',this)">🚢 SHIP VIEW</button>
-  <button onclick="showTab('fire',this)">🔥 FIRE PLAN</button>
-  <button onclick="showTab('pdf',this)">📚 PDF SYSTEM</button>
-  <button onclick="showTab('calc',this)">🧮 CALCULATION</button>
+  <button class="active" onclick="showTab('ship', this)">🚢 REAL SHIP PROFILE</button>
+  <button onclick="showTab('fire', this)">🔥 SOLAS FIRE CONTROL PLAN</button>
+  <button onclick="showTab('pdf', this)">📚 REFERENCE MANUALS (PDF)</button>
+  <button onclick="showTab('calc', this)">🧮 HYDROSTATICS CALCULATOR</button>
 </div>
 
 <div class="container">
 
-  <!-- ============ SHIP VIEW ============ -->
+  <!-- ============ TAB 1: SHIP VIEW ============ -->
   <div id="tab-ship">
     <div class="ship-stage">
-      <!-- HOLOGRAM SHIP SVG -->
-      <svg viewBox="0 0 1000 420" width="100%" style="display:block">
-        <!-- Hull -->
-        <polygon points="40,200 120,160 820,160 920,200 980,260 920,330 150,330 60,300 40,260" fill="none" stroke="#00ffff" stroke-width="3"/>
-        <!-- Deck lines -->
-        <line x1="40" y1="230" x2="980" y2="230" stroke="#00ffff" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
-        <line x1="40" y1="290" x2="920" y2="290" stroke="#00ffff" stroke-width="1" stroke-dasharray="6 4" opacity="0.7"/>
-        <!-- Frames -->
-        <g stroke="#00ffff" stroke-width="1" opacity="0.4">
-          <line x1="200" y1="170" x2="200" y2="325"/><line x1="350" y1="170" x2="350" y2="325"/>
-          <line x1="500" y1="170" x2="500" y2="325"/><line x1="650" y1="170" x2="650" y2="325"/>
-          <line x1="780" y1="170" x2="780" y2="325"/>
+      <!-- REALISTIC SHIP SVG (Commercial Bulk Carrier / LPG Tanker Design) -->
+      <svg viewBox="0 0 1100 450" width="100%" style="display:block">
+        <defs>
+          <linearGradient id="hullGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#00334e" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#00101d" stop-opacity="0.8"/>
+          </linearGradient>
+          <linearGradient id="engineGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ff0055" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#4a0018" stop-opacity="0.5"/>
+          </linearGradient>
+          <linearGradient id="stemGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#00f3ff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Structural Grid Lines (Frames & Waterlines) -->
+        <g class="frame-line">
+          <!-- Transverse Frame Stations (Fr. 0 to Fr. 100) -->
+          <line x1="80" y1="120" x2="80" y2="360"/><line x1="160" y1="120" x2="160" y2="360"/>
+          <line x1="260" y1="120" x2="260" y2="360"/><line x1="380" y1="120" x2="380" y2="360"/>
+          <line x1="500" y1="120" x2="500" y2="360"/><line x1="620" y1="120" x2="620" y2="360"/>
+          <line x1="740" y1="120" x2="740" y2="360"/><line x1="860" y1="120" x2="860" y2="360"/>
+          <line x1="960" y1="120" x2="960" y2="360"/>
+          <!-- Deck Waterlines -->
+          <line x1="50" y1="220" x2="1040" y2="220" stroke-dasharray="2 2"/>
+          <line x1="50" y1="290" x2="1040" y2="290" stroke-dasharray="2 2"/>
         </g>
 
-        <!-- CARGO HOLD - Clickable -->
-        <g class="part" onclick="showDetail('cargo')">
-          <rect x="220" y="235" width="280" height="50" fill="#00ffff" opacity="0.08" stroke="#00ffff" stroke-width="1"/>
-          <text x="360" y="265" text-anchor="middle" class="label">CARGO HOLD</text>
+        <!-- REAL SHIP HULL OUTLINE (Bulbous Bow + Transom Stern + Flare) -->
+        <path class="hull-outline" d="
+          M 60,180 
+          L 120,180 
+          L 220,220 
+          L 880,220 
+          L 960,160 
+          L 1020,160 
+          C 1050,160 1060,200 1050,230
+          C 1040,250 1050,290 1070,320 
+          C 1080,335 1060,350 1030,350
+          L 980,350
+          L 920,360
+          L 220,360
+          L 140,350
+          C 100,345 70,330 50,300
+          C 35,270 40,230 60,180 Z" fill="url(#hullGrad)" />
+
+        <!-- Load Line Mark (Design Waterline - DWL) -->
+        <line x1="30" y1="285" x2="1080" y2="285" class="waterline-mark"/>
+        <text x="40" y="280" fill="#ff4444" font-size="9" font-weight="bold">LOAD WATERLINE (DWL)</text>
+
+        <!-- Propeller & Rudder (Aft Peak Zone) -->
+        <g stroke="#00f3ff" stroke-width="1.5" fill="none">
+          <!-- Rudder -->
+          <polygon points="45,305 25,310 25,355 45,345" fill="rgba(0,243,255,0.15)"/>
+          <!-- Shaft & Propeller Hub -->
+          <line x1="45" y1="330" x2="90" y2="330" stroke-width="3"/>
+          <circle cx="45" cy="330" r="10" fill="#ffd700"/>
         </g>
 
-        <!-- DOUBLE BOTTOM -->
-        <g class="part" onclick="showDetail('doublebottom')">
-          <rect x="150" y="295" width="500" height="30" fill="#00ffff" opacity="0.12"/>
-          <text x="400" y="315" text-anchor="middle" class="label-cyan">DOUBLE BOTTOM TANK - Ballast / Fuel - 1.5m</text>
-        </g>
-
-        <!-- ENGINE ROOM -->
-        <g class="part" onclick="showDetail('engine')">
-          <rect x="540" y="235" width="120" height="55" fill="none" stroke="#ff00ff" stroke-width="2"/>
-          <text x="600" y="267" text-anchor="middle" class="label-pink">ENGINE ROOM</text>
-        </g>
-
-        <!-- EMERGENCY FIRE PUMP -->
-        <g class="part" onclick="showDetail('emg')">
-          <circle cx="720" cy="310" r="18" fill="#00ff00"/>
-          <text x="720" y="315" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">EMG</text>
-          <text x="720" y="350" text-anchor="middle" class="label-green">EMERGENCY FIRE PUMP</text>
-          <text x="720" y="365" text-anchor="middle" class="label-green">Fore Peak - Away from E/R</text>
-        </g>
-
-        <!-- BOW THRUSTER -->
-        <g class="part" onclick="showDetail('bow')">
-          <circle cx="900" cy="310" r="18" fill="#ffff00"/>
-          <text x="900" y="315" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">BT</text>
-          <text x="900" y="350" text-anchor="middle" class="label-yellow">BOW THRUSTER</text>
-        </g>
-
-        <!-- ACCOMMODATION -->
+        <!-- 1. ACCOMMODATION SUPERSTRUCTURE (Aft Deckhouse) -->
         <g class="part" onclick="showDetail('accom')">
-          <rect x="750" y="40" width="180" height="120" fill="none" stroke="#00ffff" stroke-width="2"/>
-          <text x="840" y="95" text-anchor="middle" class="label-cyan">ACCOMMODATION</text>
-          <text x="840" y="115" text-anchor="middle" class="label">Bridge + Crew</text>
-          <text x="840" y="132" text-anchor="middle" class="label">Fire Station</text>
+          <!-- Navigation Bridge + 4 Tier Decks -->
+          <path d="M 70,220 L 70,70 L 210,70 L 210,220 Z" fill="rgba(0,243,255,0.08)" stroke="#00f3ff" stroke-width="2"/>
+          <!-- Wheelhouse Wing -->
+          <rect x="60" y="70" width="160" height="25" fill="rgba(0,243,255,0.2)" stroke="#00f3ff"/>
+          <!-- Funnel / Smoke Stack -->
+          <polygon points="80,70 90,30 120,30 125,70" fill="rgba(255,0,85,0.3)" stroke="#ff0055" stroke-width="1.5"/>
+          <text x="140" y="86" class="svg-title" text-anchor="middle">NAV BRIDGE</text>
+          <text x="140" y="125" class="svg-title" text-anchor="middle">ACCOMMODATION</text>
+          <text x="140" y="140" class="svg-sub" text-anchor="middle">A-60 Class Insulation</text>
+          <text x="140" y="185" class="svg-sub" text-anchor="middle">Fire Control Station</text>
         </g>
-        <!-- Funnel -->
-        <rect x="810" y="15" width="50" height="25" fill="#00ffff" opacity="0.3"/>
+
+        <!-- 2. ENGINE ROOM & MACHINERY SPACE -->
+        <g class="part" onclick="showDetail('engine')">
+          <rect x="80" y="225" width="140" height="120" fill="url(#engineGrad)" stroke="#ff0055" stroke-width="2" stroke-dasharray="6 2"/>
+          <!-- Main Engine Block Icon -->
+          <rect x="110" y="260" width="80" height="60" fill="none" stroke="#ff0055" stroke-width="1.5"/>
+          <text x="150" y="285" class="svg-title" fill="#ff0055" text-anchor="middle">ENGINE ROOM</text>
+          <text x="150" y="300" class="svg-sub" fill="#ff80a0" text-anchor="middle">Main Engine & GenSets</text>
+        </g>
+
+        <!-- 3. CARGO HOLD NO. 2 (Aft Cargo Hold) -->
+        <g class="part" onclick="showDetail('cargohold2')">
+          <!-- Hold Profile with Hopper Tanks -->
+          <polygon points="230,225 480,225 460,325 250,325" fill="rgba(0,243,255,0.06)" stroke="#00f3ff" stroke-width="1.5"/>
+          <!-- Hatch Coaming & Cover -->
+          <rect x="250" y="210" width="210" height="15" fill="rgba(0,243,255,0.2)" stroke="#00f3ff"/>
+          <text x="355" y="265" class="svg-title" text-anchor="middle">CARGO HOLD NO. 2</text>
+          <text x="355" y="282" class="svg-sub" text-anchor="middle">Transverse Bulkhead Frame</text>
+        </g>
+
+        <!-- 4. CARGO HOLD NO. 1 (Forward Cargo Hold) -->
+        <g class="part" onclick="showDetail('cargohold1')">
+          <polygon points="495,225 740,225 720,325 515,325" fill="rgba(0,243,255,0.06)" stroke="#00f3ff" stroke-width="1.5"/>
+          <!-- Hatch Coaming & Cover -->
+          <rect x="515" y="210" width="210" height="15" fill="rgba(0,243,255,0.2)" stroke="#00f3ff"/>
+          <text x="615" y="265" class="svg-title" text-anchor="middle">CARGO HOLD NO. 1</text>
+          <text x="615" y="282" class="svg-sub" text-anchor="middle">Grain / Ballast Water Tank</text>
+        </g>
+
+        <!-- 5. DOUBLE BOTTOM TANKS (DBT - Full Length) -->
+        <g class="part" onclick="showDetail('doublebottom')">
+          <path d="M 220,330 L 890,330 L 870,358 L 230,358 Z" fill="rgba(0,243,255,0.18)" stroke="#00f3ff" stroke-width="1.5"/>
+          <text x="555" y="348" class="svg-title" fill="#00f3ff" text-anchor="middle">DOUBLE BOTTOM TANK (HEIGHT: 1.5M - SOLAS REQ)</text>
+        </g>
+
+        <!-- 6. FORECASTLE DECK & FORE PEAK TANK -->
+        <g class="part" onclick="showDetail('forepeak')">
+          <polygon points="755,225 950,165 990,165 920,330 745,325" fill="rgba(0,255,102,0.08)" stroke="#00ff66" stroke-width="1.5"/>
+          <text x="840" y="235" class="svg-title" fill="#00ff66" text-anchor="middle">FORE PEAK TANK</text>
+          <text x="840" y="250" class="svg-sub" fill="#80ffb3" text-anchor="middle">Collision Bulkhead Zone</text>
+        </g>
+
+        <!-- 7. EMERGENCY FIRE PUMP (Isolated in Fore Peak) -->
+        <g class="part" onclick="showDetail('emg')">
+          <circle cx="850" cy="285" r="18" fill="#00ff66" stroke="#fff" stroke-width="2"/>
+          <text x="850" y="289" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">EFP</text>
+          <text x="850" y="315" class="svg-title" fill="#00ff66" text-anchor="middle">EMERGENCY FIRE PUMP</text>
+        </g>
+
+        <!-- 8. BOW THRUSTER ROOM & BULBOUS BOW -->
+        <g class="part" onclick="showDetail('bow')">
+          <!-- Tunnel Icon -->
+          <circle cx="960" cy="315" r="16" fill="#ffd700" stroke="#fff" stroke-width="1.5"/>
+          <text x="960" y="319" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">BT</text>
+          <!-- Bulbous Bow Shape -->
+          <path d="M 1030,350 C 1060,350 1080,335 1070,320 C 1050,290 1040,250 1050,230" fill="none" stroke="#ffd700" stroke-width="2" stroke-dasharray="4 2"/>
+          <text x="960" y="348" class="svg-title" fill="#ffd700" text-anchor="middle">BOW THRUSTER</text>
+        </g>
       </svg>
-      <p class="hint">👆 Ship ke kisi bhi part pe tap karo - uska full detail neeche khulega</p>
+      <p class="hint">⚡ Tap on any structural deck or compartment above to inspect SOLAS & Construction Specifications</p>
     </div>
 
-    <!-- Detail Panel -->
+    <!-- Dynamic Detail Box -->
     <div id="detailBox" class="detail">
-      <h2 id="dTitle">Part Name <span id="dSub"></span></h2>
+      <div class="detail-header">
+        <h2 id="dTitle">Component <span id="dSub"></span></h2>
+      </div>
       <p id="dDesc"></p>
       <div class="tags" id="dTags"></div>
-      <p id="dPdf" style="color:#00ffff;font-size:13px"></p>
+      <p id="dPdf" style="color:var(--cyan-glow); font-size:13px; margin-top:12px; font-weight:600;"></p>
     </div>
 
-    <!-- Quick Cards -->
+    <!-- Quick Navigation Cards Grid -->
     <div class="grid">
-      <div class="card" onclick="showDetail('cargo')"><h3>📦 Cargo Hold</h3><p><b>PDF Ch.10</b> - Longitudinal Framing, Hatch Covers, Transverse Bulkhead</p></div>
-      <div class="card" onclick="showDetail('doublebottom')"><h3>⬇️ Double Bottom</h3><p><b>PDF Ch.7-8</b> - Tank Top, Ballast Tank, Fuel Tank, Height 1.5m</p></div>
-      <div class="card" onclick="showDetail('engine')"><h3>⚙️ Engine Room</h3><p><b>PDF Ch.20</b> - Main Engine, Normal Fire Pump, Shaft Tunnel</p></div>
-      <div class="card" onclick="showDetail('emg')"><h3>🟢 Emergency Fire Pump</h3><p><b>Photo 4</b> - Fore Peak me, Engine Room se door, Bridge se control</p></div>
-      <div class="card" onclick="showDetail('bow')"><h3>🟡 Bow Thruster</h3><p><b>Photo 4</b> - Fore Peak Tank me, Ship ko Left-Right karne ke liye</p></div>
-      <div class="card" onclick="showDetail('accom')"><h3>🏠 Accommodation</h3><p><b>Photo 1-2</b> - Bridge, Crew Cabins, Fire Station, A-Class Division</p></div>
+      <div class="card" onclick="showDetail('accom')">
+        <h3>🏢 Superstructure / Accommodation</h3>
+        <p><b>PDF Ch. 12</b> - Multi-tier deckhouse, Wheelhouse Navigation Bridge, A-60 Fire-rated bulkhead boundaries.</p>
+      </div>
+      <div class="card" onclick="showDetail('engine')">
+        <h3>⚙️ Engine Room & Machinery</h3>
+        <p><b>PDF Ch. 20</b> - Main propulsion, Aux generators, Main seawater fire pumps, Oily water separator.</p>
+      </div>
+      <div class="card" onclick="showDetail('cargohold1')">
+        <h3>📦 Cargo Holds & Framing</h3>
+        <p><b>PDF Ch. 10</b> - Side framing, Hopper tanks, Weather-tight hydraulic steel hatch covers.</p>
+      </div>
+      <div class="card" onclick="showDetail('doublebottom')">
+        <h3>⬇️ Double Bottom Structure</h3>
+        <p><b>PDF Ch. 7-8</b> - Solid floors, Duct keel, Centre girder, 1.5m minimum height rule for grounding safety.</p>
+      </div>
+      <div class="card" onclick="showDetail('emg')">
+        <h3>🟢 Emergency Fire Pump</h3>
+        <p><b>SOLAS Ch. II-2</b> - Located forward of collision bulkhead, independent diesel driver, remote bridge start.</p>
+      </div>
+      <div class="card" onclick="showDetail('bow')">
+        <h3>🟡 Bow Thruster & Bulbous Bow</h3>
+        <p><b>Ship Dynamics</b> - Hydrodynamic wave reduction bulb + Transverse thruster tunnel for harbour manoeuvring.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ============ FIRE PLAN ============ -->
+  <!-- ============ TAB 2: FIRE PLAN ============ -->
   <div id="tab-fire" style="display:none">
     <div class="legend">
-      <div class="red">🔴 RED = Fire - Extinguisher / Hydrant / Fire Station</div>
-      <div class="green">🟢 GREEN = Safety - Life Jacket / Life Buoy / Escape</div>
-      <div>🔵 CYAN = Structure</div>
+      <div class="red">🔴 RED = Fire Extinguishers / Hydrants / CO2 System / Fire Station</div>
+      <div class="green">🟢 GREEN = Life-Saving Appliances (LSA) / Muster Stations / Escapes</div>
+      <div class="yellow">🟡 YELLOW = Fire Dampers / Emergency Controls / Quick Closing Valves</div>
     </div>
+    
     <div class="grid">
-      <div class="card"><h3>🔥 Fire Control Plan - SOLAS</h3><p>SOLAS Ch. II-2 / 15.2.4 - Har deck pe permanently laga hona chahiye. Bridge, Accommodation, Engine Room + Deckhouse ke bahar weathertight box me shore fire-fighters ke liye.</p></div>
-      <div class="card"><h3>🟢 Safety Equipment</h3><p>Life Jacket, Life Buoy with 30m rope, Immersion Suit, Medical Chest, Emergency Escape, Muster Station</p></div>
-      <div class="card"><h3>🔴 Fire Equipment</h3><p>Fire Extinguisher, Fire Hose, Hydrant, Fire Damper, Fire Door, CO2 Room, Fireman Outfit</p></div>
-      <div class="card"><h3>⚠️ Symbols - IMO A.952(23)</h3><p>Saare symbols IMO Resolution A.952(23) aur A.654(16) ke hisaab se hone chahiye. Language - English + Crew Working Language.</p></div>
+      <div class="card">
+        <h3>📜 SOLAS Ch. II-2 Regulation 15.2.4</h3>
+        <p>Fire Control Plans must be permanently displayed for guidance of ship officers. One duplicate set of fire control plans shall be stored in a prominently marked weather-tight enclosure outside the deckhouse for shore side fire-fighting personnel.</p>
+      </div>
+      <div class="card">
+        <h3>🧯 Primary Extinguishers & Fire Lines</h3>
+        <p>Main Fire Line with minimum 2 jets of water simultaneously. CO2 Fixed Fire-Extinguishing System for Engine Room with 2-stage release alarm and automatic fan shut-offs.</p>
+      </div>
+      <div class="card">
+        <h3>🚪 Structural Fire Protection (A/B/C Class)</h3>
+        <p><b>A-Class Divisions:</b> Steel bulkheads insulated to prevent temperature rise > 139°C for 60 mins (A-60).<br><b>B-Class:</b> Non-combustible material (30 mins fire resistance).</p>
+      </div>
+      <div class="card">
+        <h3>🏷️ IMO Symbols Standard - Resolution A.952(23)</h3>
+        <p>All graphical symbols used on fire control plans must comply with IMO Resolution A.952(23) and A.654(16). Standardised symbology ensures global fire brigade interoperability.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ============ PDF SYSTEM ============ -->
+  <!-- ============ TAB 3: PDF SYSTEM ============ -->
   <div id="tab-pdf" style="display:none">
     <div class="grid">
-      <div class="card"><h3>📘 1. Ship Construction - Eyres 6th Ed.</h3><p>363 Pages - Design Spiral, Dimensions, Steel, Welding, Shipyard, Structure, Tanker, LNG/LPG</p></div>
-      <div class="card"><h3>📗 2. Ship Construction - Bruce & Eyres 7th Ed. (2012)</h3><p>32 Chapters, 7 Sections - Updated version, 2012 tak ke naye rules</p></div>
-      <div class="card"><h3>📕 3. DNV Fire Safety Rules Pt.4 Ch.10</h3><p>Fire Control Plan ka full rule - A/B Class Division, Detection, Alarm, Sprinkler</p></div>
-      <div class="card"><h3>📙 4. MRE 522 Shipyard Technology</h3><p>Steel Cutting → Block Fabrication → Erection → Launching</p></div>
+      <div class="card">
+        <h3>📘 1. Ship Construction - D.J. Eyres (6th/7th Ed.)</h3>
+        <p>Comprehensive reference covering Hull Structure, Plate Thickness, Transverse vs Longitudinal Framing, Welding Procedures, Tankers & Gas Carriers (LPG/LNG).</p>
+      </div>
+      <div class="card">
+        <h3>📕 2. DNV Rules for Classification - Pt.4 Ch.10</h3><p>Rule set for Fire Safety System, Structural Integrity of Bulkheads, Emergency Power Generation, and Water Mist Installations.</p>
+      </div>
+      <div class="card">
+        <h3>📙 3. Shipyard Technology & Fabrication Manual</h3><p>Covers Steel Plate Cutting (CNC Plasma), Block Assembly Fabrication, Berth Erection, NDT Testing (Radiography/Ultrasonic), and Vessel Launching.</p>
+      </div>
+      <div class="card">
+        <h3>📗 4. SOLAS Consolidated Edition Chapter II-2</h3><p>International Convention for Safety of Life at Sea - Construction, Fire Protection, Fire Detection, and Fire Extinction standards.</p>
+      </div>
     </div>
   </div>
 
-  <!-- ============ CALCULATION ============ -->
+  <!-- ============ TAB 4: CALCULATOR ============ -->
   <div id="tab-calc" style="display:none">
-    <div style="border:1px solid #00ffff44;border-radius:14px;padding:16px;background:#000a0a">
-      <h3 style="color:#fff">🧮 Ship Design Calculator - PDF Ch.2 Formula</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-        <label style="color:#aaa;font-size:13px">LBP (m)<br><input id="lbp" type="number" value="95" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
-        <label style="color:#aaa;font-size:13px">Beam B (m)<br><input id="beam" type="number" value="18" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
-        <label style="color:#aaa;font-size:13px">Draft (m)<br><input id="draft" type="number" value="6" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
-        <label style="color:#aaa;font-size:13px">Block Coeff. Cb<br><input id="cb" type="number" step="0.01" value="0.75" style="width:100%;padding:10px;background:#000;color:#00ffff;border:1px solid #00ffff;border-radius:8px;margin-top:4px"></label>
+    <div class="calc-box">
+      <h3 style="color:#fff; border-bottom:1px solid rgba(0,243,255,0.2); padding-bottom:10px;">🧮 Ship Hydrostatics & Displacement Calculator</h3>
+      <p style="color:#8ab4f8; font-size:13px; margin-top:8px;">Compute vessel displacement based on Principal Dimensions and Block Coefficient ($C_b$).</p>
+      
+      <div class="input-grid">
+        <div class="input-group">
+          <label>Length Between Perpendiculars (LBP - m)</label>
+          <input id="lbp" type="number" value="120">
+        </div>
+        <div class="input-group">
+          <label>Moulded Beam (B - m)</label>
+          <input id="beam" type="number" value="20">
+        </div>
+        <div class="input-group">
+          <label>Moulded Draft (T - m)</label>
+          <input id="draft" type="number" value="7.5">
+        </div>
+        <div class="input-group">
+          <label>Block Coefficient (Cb)</label>
+          <input id="cb" type="number" step="0.01" value="0.78">
+        </div>
       </div>
-      <button onclick="calc()" style="margin-top:14px;width:100%;padding:12px;background:#00ffff;color:#000;border:none;border-radius:10px;font-weight:bold;cursor:pointer">CALCULATE DISPLACEMENT</button>
-      <p id="calcResult" style="margin-top:12px;color:#00ff00;font-weight:bold;text-align:center"></p>
-      <p style="color:#888;font-size:12px;margin-top:8px;text-align:center">Formula: Displacement = L × B × Draft × Cb × 1.025</p>
+      
+      <button class="btn-calc" onclick="calc()">CALCULATE HYDROSTATICS</button>
+      
+      <div id="calcResult" style="margin-top:20px; padding:15px; background:rgba(0,255,102,0.1); border:1px solid var(--green-glow); border-radius:4px; color:var(--green-glow); text-align:center; display:none;"></div>
     </div>
   </div>
 
 </div>
 
-<footer>HOLOGRAM SHIP - Construction System | PDF: Eyres Ship Construction | SOLAS Ch. II-2 | IMO A.952(23) | GitHub Pages Ready</footer>
+<footer>
+  NAVAL ARCHITECTURE & FIRE SAFETY SYSTEM | SOLAS II-2 | IMO A.952(23) | Interactive Web Canvas Edition
+</footer>
 
 <script>
 const DATA = {
-  cargo:{title:'Cargo Hold',sub:'PDF Ch.10 | Photo 2',desc:'Cargo rakhne ki jagah. Isme Longitudinal Framing + Transverse Bulkhead hota hai. Upar Hatch Covers hote hai jo cargo ko paani se bachate hai. Tanker me yaha Oil Tank hota hai, Bulk Carrier me Hold.',tags:['Longitudinal Framing','Hatch Cover','Transverse Bulkhead'],pdf:'📚 PDF: Chapter 10 - Decks, Hatches & Cargo Handling'},
-  doublebottom:{title:'Double Bottom Tank',sub:'PDF Ch.7-8',desc:'Ship ke neeche 2 layer wala bottom. Beech me Ballast Water ya Fuel Oil bhara jata hai. Height 1.5m. Grounding hone pe pehla bottom phatne pe bhi ship nahi doobta, dusra bottom bachata hai. Iske upar Tank Top hota hai.',tags:['Ballast Tank','Fuel Tank','Tank Top - 1.5m'],pdf:'📚 PDF: Chapter 7-8 - Bottom Structure'},
-  engine:{title:'Engine Room',sub:'PDF Ch.20 | Pink Zone',desc:'Ship ka dil. Yaha Main Engine, Generator, Normal Fire Pump hota hai. Agar yaha aag lagi to Normal Fire Pump kaam nahi karega, isliye Emergency Fire Pump ko alag rakha jata hai.',tags:['Main Engine','Normal Fire Pump','Shaft Tunnel'],pdf:'📚 PDF: Chapter 20 - Machinery'},
-  emg:{title:'Emergency Fire Pump',sub:'Photo 4 | SOLAS Rule',desc:'Sabse important safety part. Ye Fore Peak Tank me, Engine Room se bahut door, alag watertight compartment me hota hai. Iska control Bridge se bhi hota hai. Engine Room me aag lagne pe bhi ye pump chalega aur paani dega.',tags:['Fore Peak','Watertight','Bridge Remote Control'],pdf:'📚 Photo 4 + SOLAS Ch. II-2 / 15.2.4'},
-  bow:{title:'Bow Thruster',sub:'Photo 4 | Fore Peak',desc:'Ship ke sabse aage, Fore Peak Tank me laga chhota propeller. Ye side me paani dhakel ke ship ko left-right karta hai, bina tug ke port me ghoomane ke liye. 36ft depth wale tank me laga hota hai.',tags:['Fore Peak Tank','Manoeuvring','Port Entry'],pdf:'📚 Photo 4 - Bow Thruster Detail'},
-  accom:{title:'Accommodation Block',sub:'Photo 1-2 | Red Zone',desc:'Crew rehne ki jagah - Bridge, Cabins, Galley, Fire Station. Ye A-Class Division se bana hota hai taaki aag 60 min tak na phaile. Fire Plan me isko Laal colour se dikhaya jata hai kyunki yaha sabse zyada jaan ka khatra hai.',tags:['Bridge','Crew Cabins','Fire Station','A-Class Division'],pdf:'📚 Photo 1-2 + PDF Chapter 12'}
+  accom: {
+    title: 'Accommodation Superstructure',
+    sub: 'PDF Ch. 12 | SOLAS Reg II-2/9',
+    desc: 'Multi-deck superstructure housing Navigation Bridge, Crew Cabins, Mess Room, and Central Fire Control Station. Boundaries facing cargo area are insulated to A-60 standard to prevent fire spread from deck areas.',
+    tags: ['A-60 Insulation', 'Nav Bridge', 'Fire Control Station', 'Wheelhouse'],
+    pdf: '📚 Reference: Eyres Chapter 12 - Superstructures & Deckhouses'
+  },
+  engine: {
+    title: 'Engine Room & Machinery Space',
+    sub: 'PDF Ch. 20 | Pink Safety Zone',
+    desc: 'Houses Main Propulsion Engine, Auxiliary Diesel Generators, Main Seawater Fire Pumps, and Engine Control Room. Protected by Fixed CO2 Fire Extinguishing System with 2-stage release alarms.',
+    tags: ['Main Engine', 'CO2 Protection', 'Main Fire Pumps', 'Aux Generators'],
+    pdf: '📚 Reference: Eyres Chapter 20 - Machinery Spaces & Engine Casing'
+  },
+  cargohold2: {
+    title: 'Cargo Hold No. 2 (Aft)',
+    sub: 'PDF Ch. 10 | Structural Hold',
+    desc: 'Deep cargo compartment fitted with longitudinal framing and heavy transverse watertight bulkheads. Equipped with hydraulic steel folding hatch covers to ensure weather-tightness under rough seas.',
+    tags: ['Longitudinal Framing', 'Hatch Covers', 'Watertight Bulkhead'],
+    pdf: '📚 Reference: Eyres Chapter 10 - Cargo Holds & Hatchways'
+  },
+  cargohold1: {
+    title: 'Cargo Hold No. 1 (Forward)',
+    sub: 'PDF Ch. 10 | Collision Boundary Zone',
+    desc: 'Forward cargo section designed with hopper tanks for ballast water management and load distribution. Strengthened against panting and pounding forces experienced near the bow.',
+    tags: ['Hopper Tanks', 'Pounding Reinforcement', 'Ballast Hold'],
+    pdf: '📚 Reference: Eyres Chapter 10 - Shell Plating & Hold Structure'
+  },
+  doublebottom: {
+    title: 'Double Bottom Tank System',
+    sub: 'PDF Ch. 7-8 | SOLAS Reg II-1',
+    desc: 'Full-length double bottom continuous from collision bulkhead to aft peak bulkhead. Minimum height of 1.5m as mandated by SOLAS. Serves as fuel oil storage and sea water ballast tanks while providing bottom grounding protection.',
+    tags: ['1.5m Height Rule', 'Ballast Tanks', 'Duct Keel', 'Solid Floors'],
+    pdf: '📚 Reference: Eyres Chapter 7 & 8 - Double Bottom Construction'
+  },
+  forepeak: {
+    title: 'Fore Peak Tank & Collision Bulkhead',
+    sub: 'PDF Ch. 9 | Forward Safety Zone',
+    desc: 'Reinforced compartment aft of the stem plate. Contains the heavy Collision Bulkhead designed to prevent ship flooding in case of head-on collision.',
+    tags: ['Collision Bulkhead', 'Panting Stringers', 'Chain Locker'],
+    pdf: '📚 Reference: Eyres Chapter 9 - Fore End Structure'
+  },
+  emg: {
+    title: 'Emergency Fire Pump Compartment',
+    sub: 'SOLAS Ch. II-2 / Reg 10.2.2',
+    desc: 'Completely isolated fire pump located forward in the Fore Peak structure, far away from Engine Room fire hazards. Powered by independent diesel engine generator; remote start reachable from Nav Bridge.',
+    tags: ['Isolated Space', 'Independent Diesel Driver', 'Remote Bridge Start'],
+    pdf: '📚 Reference: SOLAS Chapter II-2 Regulation 10 & Fire Plan Specs'
+  },
+  bow: {
+    title: 'Bow Thruster & Bulbous Bow',
+    sub: 'Hydrodynamics & Manoeuvring',
+    desc: 'Transverse tunnel thruster for port manoeuvring without tug assistance. Combined with a hydrodynamic Bulbous Bow that alters water flow to reduce hull wave-making resistance.',
+    tags: ['Bulbous Bow', 'Tunnel Thruster', 'Manoeuvring'],
+    pdf: '📚 Reference: Naval Architecture & Hydrodynamics Design'
+  }
 };
-function showDetail(key){
+
+function showDetail(key) {
   const d = DATA[key];
-  if(!d) return;
-  document.getElementById('detailBox').classList.add('show');
-  document.getElementById('dTitle').innerHTML = d.title + ' <span>'+d.sub+'</span>';
+  if (!d) return;
+
+  // Clear active states on SVG
+  document.querySelectorAll('.part').forEach(p => p.classList.remove('active'));
+
+  // Add active state to clicked element if triggered by event
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
+
+  const box = document.getElementById('detailBox');
+  box.classList.add('show');
+  document.getElementById('dTitle').innerHTML = d.title + ' <span>' + d.sub + '</span>';
   document.getElementById('dDesc').innerText = d.desc;
   document.getElementById('dPdf').innerText = d.pdf;
-  document.getElementById('dTags').innerHTML = d.tags.map(t=>'<span class="tag">'+t+'</span>').join('');
-  document.getElementById('detailBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+  document.getElementById('dTags').innerHTML = d.tags.map(t => '<span class="tag">' + t + '</span>').join('');
+
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-function showTab(id,btn){
-  ['ship','fire','pdf','calc'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display = (t===id?'block':'none');
+
+function showTab(id, btn) {
+  ['ship', 'fire', 'pdf', 'calc'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = (t === id ? 'block' : 'none');
   });
-  document.querySelectorAll('.top-bar button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.top-bar button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
-function calc(){
-  const L=parseFloat(document.getElementById('lbp').value);
-  const B=parseFloat(document.getElementById('beam').value);
-  const T=parseFloat(document.getElementById('draft').value);
-  const Cb=parseFloat(document.getElementById('cb').value);
-  const disp = L*B*T*Cb*1.025;
-  document.getElementById('calcResult').innerText = 'Displacement = '+disp.toFixed(0)+' Tonnes | Freeboard = Depth - Draft';
+
+function calc() {
+  const L = parseFloat(document.getElementById('lbp').value) || 0;
+  const B = parseFloat(document.getElementById('beam').value) || 0;
+  const T = parseFloat(document.getElementById('draft').value) || 0;
+  const Cb = parseFloat(document.getElementById('cb').value) || 0;
+  
+  // Seawater density = 1.025 tonnes/m3
+  const disp = L * B * T * Cb * 1.025;
+  const resDiv = document.getElementById('calcResult');
+  
+  resDiv.style.display = 'block';
+  resDiv.innerHTML = `
+    <strong>Displacement ($\Delta$): ${disp.toFixed(2)} Metric Tonnes</strong><br>
+    <span style="font-size:12px; color:#aaa;">Volume of Displacement ($\nabla$) = ${(L * B * T * Cb).toFixed(2)} m³ | Water Density = 1.025 t/m³</span>
+  `;
 }
-//
+
+// Default selection on load
+showDetail('emg');
+</script>
+</body>
+</html>
