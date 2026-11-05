@@ -3,87 +3,199 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HOLOGRAM SHIP - PREMIUM 3D</title>
+<title>KEEL TO MAST - REAL CONSTRUCTION</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
-body{background:#020a12;color:#fff;overflow-x:hidden}
-.top{text-align:center;padding:14px 10px 6px}
-.top h1{font-size:20px;letter-spacing:1px}
-.top h1 b{color:#00f3ff}
-.top p{font-size:11px;color:#8ab4f8;margin-top:4px}
-.btns{display:flex;gap:8px;justify-content:center;padding:10px;flex-wrap:wrap}
-.btns button{background:#0a2a3a;border:1px solid #00f3ff;color:#00f3ff;padding:9px 16px;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer}
-.btns button.active{background:#00f3ff;color:#000;box-shadow:0 0 15px #00f3ff}
-#stage{margin:8px;border:1px solid #00f3ff;border-radius:16px;overflow:hidden;position:relative;background:#071a28;height:58vh;display:flex;align-items:center;justify-content:center;perspective:900px}
-#shipImg{width:97%;max-height:100%;object-fit:contain;transition:transform .2s;filter:drop-shadow(0 0 18px rgba(0,243,255,.55));touch-action:none}
-.hint{text-align:center;font-size:11px;color:#8ab4f8;padding:5px}
-.hot{position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(0,243,255,.95);color:#000;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #fff;box-shadow:0 0 16px #00f3ff;cursor:pointer;z-index:10;animation:pulse 1.5s infinite}
-@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
-#panel{background:#03121e;border:1px solid #00f3ff;margin:10px;border-radius:14px;padding:14px;display:none}
-#panel.show{display:block}
-#panel h2{color:#00f3ff;font-size:13px;text-align:center;letter-spacing:1px}
-#panel h3{color:#fff;font-size:17px;margin-top:6px}
-#panel p{color:#d0e0f0;font-size:13px;line-height:1.5;margin-top:6px}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
-td,th{border:1px solid rgba(0,243,255,.25);padding:7px;text-align:left}
-th{background:rgba(0,243,255,.15);color:#fff}
-td{color:#e0f0ff}
-.fbox{margin-top:12px;background:#010d18;border:1px dashed #00f3ff;padding:11px;border-radius:10px;font-size:12px;color:#a0c8e0;line-height:1.6}
-.fbox b{color:#ffd700}
-.card{border:1px solid rgba(0,243,255,.3);border-radius:12px;padding:13px;margin:8px;background:#02101c;cursor:pointer}
-.card h3{font-size:14px;color:#fff}
-.card p{font-size:12px;color:#9aa0a6;margin-top:3px}
+body{background:#0a0f14;color:#fff;overflow-x:hidden}
+.top{text-align:center;padding:12px 8px;background:#0f1a24}
+.top h1{font-size:19px;letter-spacing:1px}.top h1 b{color:#ffb400}
+.top p{font-size:11px;color:#8ab4f8;margin-top:3px}
+.calc{background:#111f2e;margin:10px;border-radius:12px;padding:12px;border:1px solid #ffb400}
+.calc h3{font-size:13px;color:#ffb400}
+.row{display:flex;gap:8px;margin-top:8px}
+.row label{flex:1;font-size:11px;color:#ccc}
+.row input,.row select{width:100%;padding:9px;border-radius:8px;border:1px solid #333;background:#020a12;color:#fff;font-weight:700;margin-top:3px;font-size:14px}
+.calcBtn{width:100%;background:#ffb400;color:#000;border:none;padding:11px;border-radius:10px;font-weight:800;margin-top:10px;font-size:14px}
+.result{background:#020a12;border:1px dashed #00f3ff;border-radius:10px;padding:10px;margin-top:10px;font-size:12px;line-height:1.7;color:#d0e0f0}
+.result b{color:#fff}.result span{color:#00f3ff;font-weight:700}
+.btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:8px}
+.btns button{background:#1a2a3a;border:1px solid #00f3ff;color:#00f3ff;padding:8px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer}
+.btns button.active{background:#00f3ff;color:#000}
+.btns button.gold{border-color:#ffb400;color:#ffb400}.btns button.gold.active{background:#ffb400;color:#000}
+#yard{margin:8px;border:2px solid #ffb400;border-radius:14px;overflow:hidden;background:#000;position:relative;height:48vh}
+#yard svg{width:100%;height:100%;background:linear-gradient(#1a2a3a,#0a0f14)}
+.zoomBar{display:flex;gap:6px;justify-content:center;padding:6px}
+.zoomBar button{background:#222;border:1px solid #555;color:#fff;padding:8px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.zoomBar button.active{background:#ffb400;color:#000}
+.progress{margin:10px;background:#111f2e;border-radius:12px;padding:12px;border:1px solid #333}
+.progress h3{font-size:13px}
+.bar{height:10px;background:#333;border-radius:10px;margin:8px 0;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb400,#ff4400);transition:.5s}
+.steps{margin:10px}
+.step{border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:8px;background:#111f2e;cursor:pointer}
+.step.active{border-color:#ffb400;background:#1a2a1a}
+.step.done{border-color:#00ff66}
+.step h4{font-size:14px}.step p{font-size:12px;color:#aaa;margin-top:3px;line-height:1.5}
+.step .tag{float:right;background:#ffb400;color:#000;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:800}
+.plateBtns{display:flex;gap:6px;flex-wrap:wrap;margin:10px}
+.plateBtns button{background:#222;border:1px solid #555;color:#fff;padding:10px 14px;border-radius:10px;font-weight:700}
+.plateBtns button.on{background:#00ff66;color:#000}
+#detail{background:#03121e;border:1px solid #00f3ff;margin:10px;border-radius:14px;padding:14px;display:none}
+#detail.show{display:block}
+#detail h2{color:#00f3ff;font-size:13px;text-align:center}
+#detail h3{margin-top:6px;font-size:16px}
+#detail p{font-size:13px;color:#d0e0f0;line-height:1.6;margin-top:6px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}td,th{border:1px solid rgba(255,255,255,.2);padding:7px}th{background:#222}
 </style>
 </head>
 <body>
-<div class="top"><h1><b>HOLOGRAM</b> SHIP - PREMIUM 3D</h1><p>DRAG TO ROTATE • TAP + DOT FOR DIMENSION</p></div>
+<div class="top"><h1><b>KEEL TO MAST</b> - REAL CONSTRUCTION</h1><p>KEEL SE MAST TAK • 1 BY 1 PLATE • REAL CALCULATION • NO HOLOGRAM</p></div>
+
+<div class="calc">
+<h3>⚓ 1. SHIP KA SIZE DALO - KEEL ISI SE BANEGI</h3>
+<div class="row">
+<label>Deadweight (DWT)<input id="dwt" type="number" value="82000"></label>
+<label>LOA (m)<input id="loa" type="number" value="215"></label>
+</div>
+<div class="row">
+<label>Beam (m)<input id="beam" type="number" value="32.2"></label>
+<label>Depth (m)<input id="depth" type="number" value="18.5"></label>
+</div>
+<button class="calcBtn" onclick="calcKeel()">🧮 KEEL CALCULATE KARO</button>
+<div class="result" id="calcRes">DWT 82000 dala hai → Calculate dabao, Keel + Steel Weight + Time nikal jayega.</div>
+</div>
+
 <div class="btns">
-<button class="active" onclick="tilt(0,this)">🔄 3D</button>
-<button onclick="tilt(-25,this)">➡️ SIDE</button>
-<button onclick="tilt(25,this)">⬆️ BOW</button>
-<button onclick="resetTilt(this)">↩️ RESET</button>
-</div>
-<div id="stage">
-<img id="shipImg" src="ship.png" alt="Hologram Ship">
-<div class="hot" style="left:72%;top:26%" onclick="showInfo('accom')">+</div>
-<div class="hot" style="left:68%;top:52%;background:#ff0055;color:#fff" onclick="showInfo('engine')">+</div>
-<div class="hot" style="left:42%;top:46%" onclick="showInfo('hold1')">+</div>
-<div class="hot" style="left:45%;top:68%;background:#00ff66;color:#000" onclick="showInfo('db')">+</div>
-<div class="hot" style="left:10%;top:60%;background:#ffd700;color:#000" onclick="showInfo('bow')">+</div>
-</div>
-<p class="hint">👆 Photo ko ungli se ghumao • + dot pe tap karo</p>
-
-<div id="panel">
-<h2 id="pCat"></h2><h3 id="pTitle"></h3><p id="pDesc"></p>
-<table id="pDim"></table>
-<div class="fbox"><b>🏗️ STRUCTURE / FRAME DESIGN</b><br><span id="pFrame"></span></div>
-<div class="fbox"><b>📐 SECTION VIEW</b><br><span id="pSection"></span></div>
+<button class="active gold" onclick="gotoStep(0,this)">1. KEEL LAYING</button>
+<button onclick="gotoStep(1,this)">2. KANKAL / FRAMES</button>
+<button onclick="gotoStep(2,this)">3. SIDE PLATES</button>
+<button onclick="gotoStep(3,this)">4. DECK + MAST</button>
 </div>
 
-<div class="card" onclick="showInfo('accom')"><h3>🏢 Accommodation - Tap karo</h3><p>White Superstructure, Nav Bridge, A-60</p></div>
-<div class="card" onclick="showInfo('engine')"><h3>⚙️ Engine Room - Tap karo</h3><p>Main Engine, CO2 System, Fire Pumps</p></div>
-<div class="card" onclick="showInfo('hold1')"><h3>📦 Cargo Hold - Tap karo</h3><p>Hatch Cover, Containers, Hopper Tank</p></div>
-<div class="card" onclick="showInfo('db')"><h3>⬇️ Double Bottom - Tap karo</h3><p>1.5m Height, Duct Keel, Ballast</p></div>
-<div class="card" onclick="showInfo('bow')"><h3>🟡 Bow - Tap karo</h3><p>Sharp Raked Bow, Underwater Bulb</p></div>
+<div id="yard">
+<svg id="svgShip" viewBox="0 0 400 220" preserveAspectRatio="xMidYMid meet">
+<!-- Sea / Dock -->
+<rect x="0" y="185" width="400" height="35" fill="#0a2a3a"/>
+<text x="10" y="205" fill="#00f3ff" font-size="9">DRY DOCK #3 • KEEL BLOCKS</text>
+<!-- Keel -->
+<g id="gKeel" opacity="0"><rect x="30" y="170" width="340" height="10" fill="#ff4400"/><text x="180" y="167" fill="#ffb400" font-size="10" text-anchor="middle">KEEL - Centre Girder</text></g>
+<!-- Frames / Skeleton -->
+<g id="gFrames" opacity="0"></g>
+<!-- Side Plates -->
+<g id="gPlates" opacity="1"></g>
+<!-- Deck -->
+<g id="gDeck" opacity="0"><rect x="35" y="95" width="330" height="6" fill="#ffb400"/><text x="200" y="92" fill="#fff" font-size="9" text-anchor="middle">MAIN DECK</text></g>
+<!-- Mast -->
+<g id="gMast" opacity="0"><line x1="320" y1="95" x2="320" y2="30" stroke="#fff" stroke-width="3"/><rect x="300" y="30" width="40" height="4" fill="#fff"/><text x="320" y="22" fill="#fff" font-size="9" text-anchor="middle">MAIN MAST</text></g>
+<!-- Labels -->
+<text id="zoomLabel" x="200" y="20" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold">SIDE VIEW: KEEL → MAST</text>
+</svg>
+</div>
+
+<div class="zoomBar">
+<button class="active" onclick="zoomTo('keel',this)">🔍 ZOOM KEEL</button>
+<button onclick="zoomTo('mid',this)">🔍 ZOOM MIDSHIP</button>
+<button onclick="zoomTo('bow',this)">🔍 ZOOM BOW</button>
+<button onclick="zoomTo('full',this)">↩️ FULL VIEW</button>
+</div>
+
+<div class="progress">
+<h3>🏗️ STEEL WEIGHT BUILT - <span id="tonTxt">0 / 18500 Tonnes</span></h3>
+<div class="bar"><i id="tonBar" style="width:0%"></i></div>
+<p style="font-size:12px;color:#aaa"><span id="pctTxt">0%</span> Complete • Est. Hull Complete: <b id="daysTxt">180 days</b> • 1.5 Years Total Project</p>
+</div>
+
+<div class="plateBtns">
+<button onclick="addPlate(1,this)">+ PLATE 1</button>
+<button onclick="addPlate(2,this)">+ PLATE 2</button>
+<button onclick="addPlate(3,this)">+ PLATE 3</button>
+<button onclick="addPlate(4,this)">+ PLATE 4</button>
+<button onclick="addPlate(5,this)">+ PLATE 5</button>
+<button onclick="resetBuild()" style="background:#ff0055;color:#fff">RESET</button>
+</div>
+<p style="text-align:center;font-size:11px;color:#8ab4f8">👆 Ek-ek Plate dabao, side me lagte hue dekho + tonnage badhega</p>
+
+<div class="steps" id="stepsBox"></div>
+
+<div id="detail"><h2 id="dCat"></h2><h3 id="dTitle"></h3><p id="dDesc"></p><table id="dTable"></table></div>
 
 <script>
-var DATA={
-accom:{cat:"ACCOMMODATION — DIMENSIONS",t:"ACCOMMODATION - White Superstructure",d:"Crew cabins, Navigation Bridge with full glass, Fire Control Station. 5-tier white deckhouse.",dim:[["Length","18 m"],["Breadth","20 m"],["Height","15 m (5 Decks)"],["Bulkhead","A-60 6mm + 50mm Insul."],["Windows","Toughened Glass"]],f:"Pillars + Deck Beams @2.4m | Bulkhead Stiffeners 100x8 @600mm | Bridge Wings 2m each side",s:"SIDE: [Bridge Glass] - [Deck D] - [Deck C] - [Deck B] - [Deck A] - Main Deck"},
-engine:{cat:"ENGINE ROOM — DIMENSIONS",t:"ENGINE ROOM - Machinery Space",d:"Main Engine, Generators, Fire Pumps. CO2 Fixed System se protected.",dim:[["Length","22 m"],["Breadth","20 m"],["Height","10 m"],["Main Engine","MAN 12,000 kW"],["Generators","3 x 1200 kW"]],f:"Heavy Transverse Bulkhead 12mm | Engine Foundation Girders 800mm high | Vibration Dampers",s:"CROSS: [Funnel Casing] - [Engine Top] - [Main Engine] - [Tank Top]"},
-hold1:{cat:"CARGO HOLD — DIMENSIONS",t:"CARGO HOLD NO.1 - Forward Hold",d:"Bulk cargo + Containers. Rust-red hatch covers, Hopper tanks.",dim:[["Length","28 m"],["Breadth","19 m"],["Depth","10 m"],["Hatch Size","24m x 14m"],["Capacity","4,500 m3"]],f:"Side Frames T-Bar 300x12 @750mm | Hopper Tank 45° Sloped | Corrugated Bulkhead 10mm",s:"HOLD SECTION: [Hatch Coaming 1.2m] - [Hold Space] - [Hopper 45°] - [Double Bottom]"},
-db:{cat:"DOUBLE BOTTOM TANK — DIMENSIONS",t:"DOUBLE BOTTOM TANK",d:"Grounding se bachane ke liye 1.5m double bottom. Fuel + Ballast water.",dim:[["Length (LOA)","215.0 m"],["Breadth (Moulded)","32.2 m"],["Depth (Moulded)","18.5 m"],["Tank Capacity","12,400 m3"],["Frame Spacing","600 mm"],["DB Height","1.5 m"]],f:"Centre Girder 1200x12mm | Side Girders + Solid Floors + Bracket Floors | Manhole 600x400mm | Duct Keel centre me pipe ke liye | Frame: 600mm spacing, Plate: 15mm",s:"DB SECTION: [Tank Top Plating 12mm] - [1.5m Void] - [Bottom Plating 14mm] | Longitudinal + Transverse"},
-bow:{cat:"BOW — DIMENSIONS",t:"BOW + BULBOUS BOW",d:"Sharp raked stem upar. Bulb paani ke neeche chhota sa hai - bahar se dikhta hi nahi, sirf wave kam karta hai.",dim:[["Stem Rake","15 Degree"],["Bulb Length","4 m"],["Bulb Dia","1.8 m"],["Thruster Tunnel","1.8 m Dia"],["Fuel Saving","12-15%"]],f:"Raked Stem Plate 14mm | Bulb Welded to Stem Below Waterline | Thruster Tunnel Transverse Pipe 12mm",s:"BOW: [Raked Stem] - [Bulb Below Waterline - Hidden] - [Thruster Tunnel]"}
-};
-function showInfo(k){var d=DATA[k];document.getElementById('panel').className='show';document.getElementById('pCat').innerText=d.cat;document.getElementById('pTitle').innerText=d.t;document.getElementById('pDesc').innerText=d.d;document.getElementById('pFrame').innerText=d.f;document.getElementById('pSection').innerText=d.s;document.getElementById('pDim').innerHTML='<tr><th>PARAMETER</th><th>VALUE</th></tr>'+d.dim.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('');document.getElementById('panel').scrollIntoView({behavior:'smooth'});}
-var img=document.getElementById('shipImg'), rx=0, ry=0, sx=0, sy=0, drag=false;
-function tilt(v,btn){document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');ry=v;apply();}
-function resetTilt(btn){document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');rx=0;ry=0;apply();}
-function apply(){img.style.transform='rotateY('+ry+'deg) rotateX('+rx+'deg) scale(1.04)';}
-var stage=document.getElementById('stage');
-stage.addEventListener('touchstart',function(e){drag=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY;});
-stage.addEventListener('touchmove',function(e){if(!drag)return;ry+=(e.touches[0].clientX-sx)*0.3;rx-=(e.touches[0].clientY-sy)*0.2;if(rx>20)rx=20;if(rx<-20)rx=-20;if(ry>45)ry=45;if(ry<-45)ry=-45;sx=e.touches[0].clientX;sy=e.touches[0].clientY;apply();});
-stage.addEventListener('touchend',function(){drag=false;});
-setTimeout(function(){showInfo('db')},800);
+var STEPS=[
+{cat:"STEP 1 - KEEL LAYING",t:"KEEL LAYING - Ship ki Reedh ki Haddi",d:"Keel sabse pehle lagti hai. Keel Blocks pe Centre Girder rakha jata hai. Isi pe poora ship khada hota hai. Keel ka size DWT se nikalta hai - jitna bada ship, utni moti Keel.",dim:[["Keel Type","Flat Bar + Centre Girder"],["Keel Length","LOA ka 85%"],["Keel Height","1200 mm"],["Keel Plate","20-25 mm"],["Keel Blocks","Har 3m pe 1 Block"]],steel:450},
+{cat:"STEP 2 - KANKAL / FRAMES",t:"KANKAL - Frames / Ribs",d:"Keel ke upar har 800mm pe Frames (pasli) khade kiye jate hai. Yehi ship ka kankal hai. Frames ke bina plate kahi nahi tikegi.",dim:[["Frame Spacing","800 mm"],["Frame Type","T-Bar 300x12"],["Total Frames","~260 Nos"],["Transverse Bulkhead","Har 25m pe 1"]],steel:3800},
+{cat:"STEP 3 - SIDE PLATES 1 BY 1",t:"SIDE PLATES - 1 By 1 Lagte Hue",d:"Ab side plates ek-ek karke lagti hai. Neeche se upar: Bottom Plate -> Bilge Plate -> Side Plate -> Sheer Strake. Har plate ko weld + test kiya jata hai.",dim:[["Bottom Plate","20 mm"],["Bilge Plate","16 mm"],["Side Plate","14 mm"],["Sheer Strake","18 mm"],["Plate Size","12m x 3m"]],steel:9200},
+{cat:"STEP 4 - DECK + MAST",t:"DECK + MAIN MAST",d:"Side plates ke baad Deck lagta hai, fir Accommodation Block crane se uthake rakha jata hai, sabse last me Main Mast lagta hai.",dim:[["Main Deck","12 mm"],["Deck Beams","Har 2.4m"],["Mast Height","28 m above Deck"],["Funnel Height","9 m"]],steel:5050}
+];
+var totalSteel=18500, built=0, platesAdded={};
+function calcKeel(){
+var dwt=+document.getElementById('dwt').value||82000;
+var loa=+document.getElementById('loa').value||215;
+var beam=+document.getElementById('beam').value||32.2;
+var depth=+document.getElementById('depth').value||18.5;
+var keelLen=Math.round(loa*0.85);
+var keelH=Math.round(800 + dwt/100);
+var steel=Math.round(dwt*0.225);
+var days=Math.round(120 + dwt/800);
+totalSteel=steel;
+document.getElementById('calcRes').innerHTML='✅ <b>CALCULATION DONE</b><br>Ship: <span>'+dwt+' DWT | '+loa+'m LOA | '+beam+'m Beam</span><br>Keel Length: <span>'+keelLen+' m</span> | Keel Height: <span>'+keelH+' mm</span> | Keel Plate: <span>'+(18+Math.round(dwt/20000))+' mm</span><br>Total Steel: <span>'+steel.toLocaleString()+' Tonnes</span> | Hull Time: <span>'+days+' Days</span> | Total Project: <span>~18 Months (1.5 Years)</span>';
+updateTon();
+}
+function updateTon(){
+document.getElementById('tonTxt').innerText=built.toLocaleString()+' / '+totalSteel.toLocaleString()+' Tonnes';
+var p=Math.min(100,Math.round(built/totalSteel*100));
+document.getElementById('tonBar').style.width=p+'%';
+document.getElementById('pctTxt').innerText=p+'%';
+document.getElementById('daysTxt').innerText=Math.max(0,180-Math.round(p*1.2))+' days';
+}
+function renderSteps(){
+document.getElementById('stepsBox').innerHTML=STEPS.map(function(s,i){return '<div class="step" id="step'+i+'" onclick="gotoStep('+i+',null)"><span class="tag">'+(built>0 && i==0?'DONE':'STEP '+(i+1))+'</span><h4>'+s.t+'</h4><p>'+s.d+'</p></div>'}).join('');
+}
+function gotoStep(i,btn){
+if(btn){document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}
+document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active')});var el=document.getElementById('step'+i);if(el)el.classList.add('active');
+var d=STEPS[i];
+document.getElementById('detail').className='show';
+document.getElementById('dCat').innerText=d.cat;
+document.getElementById('dTitle').innerText=d.t;
+document.getElementById('dDesc').innerText=d.d;
+document.getElementById('dTable').innerHTML='<tr><th>PARAMETER</th><th>VALUE</th></tr>'+d.dim.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('');
+// Show in SVG
+var keel=document.getElementById('gKeel'), frames=document.getElementById('gFrames'), deck=document.getElementById('gDeck'), mast=document.getElementById('gMast');
+keel.style.opacity=i>=0?1:0;
+frames.style.opacity=i>=1?1:0;
+deck.style.opacity=i>=3?1:0;
+mast.style.opacity=i>=3?1:0;
+if(i==0){built=Math.max(built,450); }
+if(i==1){built=Math.max(built,4250); buildFrames(); }
+if(i==3){built=Math.max(built,totalSteel); }
+updateTon();
+document.getElementById('detail').scrollIntoView({behavior:'smooth'});
+}
+function buildFrames(){
+var g=document.getElementById('gFrames');g.innerHTML='';
+for(var x=40;x<360;x+=18){g.innerHTML+='<line x1="'+x+'" y1="170" x2="'+x+'" y2="100" stroke="#ffb400" stroke-width="2" opacity="0.9"/><line x1="'+x+'" y1="100" x2="'+(x+18)+'" y2="100" stroke="#ffb400" stroke-width="1" opacity="0.5"/>';}
+g.innerHTML+='<text x="200" y="90" fill="#fff" font-size="9" text-anchor="middle">KANKAL - FRAMES @800mm</text>';
+}
+function addPlate(n,btn){
+if(platesAdded[n])return;
+platesAdded[n]=true;btn.classList.add('on');
+var colors=["#8a2a2a","#2a5a8a","#2a8a5a","#8a6a2a","#5a2a8a"];
+var y=160-(n-1)*13;
+var g=document.getElementById('gPlates');
+g.innerHTML+='<rect x="35" y="'+y+'" width="330" height="12" fill="'+colors[n-1]+'" stroke="#fff" stroke-width="0.5"/><text x="200" y="'+(y+9)+'" fill="#fff" font-size="8" text-anchor="middle">SIDE PLATE '+n+' - '+(14+n)+'mm - WELDED ✅</text>';
+built+=1850; if(built>totalSteel)built=totalSteel;
+updateTon();
+if(n==5){document.getElementById('detail').className='show';document.getElementById('dCat').innerText='SIDE PLATES DONE';document.getElementById('dTitle').innerText='5 Plates Lag Gayi - Hull Band Ho Gaya';document.getElementById('dDesc').innerText='Ab hull band ho gaya hai. Agla step Deck + Mast hai. Tonnage dekh, kitna steel lag gaya.';}
+}
+function resetBuild(){built=0;platesAdded={};document.getElementById('gPlates').innerHTML='';document.querySelectorAll('.plateBtns button').forEach(function(b){b.classList.remove('on')});updateTon();}
+function zoomTo(where,btn){
+document.querySelectorAll('.zoomBar button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
+var svg=document.getElementById('svgShip');
+if(where=='keel'){svg.setAttribute('viewBox','0 130 200 90');document.getElementById('zoomLabel').textContent='ZOOM: KEEL - Centre Girder + Keel Blocks';}
+if(where=='mid'){svg.setAttribute('viewBox','100 80 200 110');document.getElementById('zoomLabel').textContent='ZOOM: MIDSHIP - Frames + Side Plates';}
+if(where=='bow'){svg.setAttribute('viewBox','250 50 150 140');document.getElementById('zoomLabel').textContent='ZOOM: BOW - Stem + Bulb Area';}
+if(where=='full'){svg.setAttribute('viewBox','0 0 400 220');document.getElementById('zoomLabel').textContent='SIDE VIEW: KEEL → MAST';}
+}
+renderSteps();calcKeel();gotoStep(0,null);
 </script>
 </body>
 </html>
