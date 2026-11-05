@@ -8,18 +8,21 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
 body{background:#020a12;color:#fff;overflow-x:hidden}
 .top{text-align:center;padding:14px 10px 6px}
-.top h1{font-size:19px;letter-spacing:1px}
+.top h1{font-size:20px;letter-spacing:1px}
 .top h1 b{color:#00f3ff}
 .top p{font-size:11px;color:#8ab4f8;margin-top:4px}
 .btns{display:flex;gap:8px;justify-content:center;padding:10px;flex-wrap:wrap}
 .btns button{background:#0a2a3a;border:1px solid #00f3ff;color:#00f3ff;padding:9px 16px;border-radius:20px;font-weight:700;font-size:12px;cursor:pointer}
 .btns button.active{background:#00f3ff;color:#000;box-shadow:0 0 15px #00f3ff}
-#box{height:58vh;margin:8px;border-radius:16px;overflow:hidden;border:1px solid #00f3ff;background:radial-gradient(circle at 50% 30%,#0a2a3a,#020a12);position:relative}
-.hint{text-align:center;font-size:11px;color:#8ab4f8;padding:4px}
+#stage{margin:8px;border:1px solid #00f3ff;border-radius:16px;overflow:hidden;position:relative;background:#071a28;height:58vh;display:flex;align-items:center;justify-content:center;perspective:900px}
+#shipImg{width:97%;max-height:100%;object-fit:contain;transition:transform .2s;filter:drop-shadow(0 0 18px rgba(0,243,255,.55));touch-action:none}
+.hint{text-align:center;font-size:11px;color:#8ab4f8;padding:5px}
+.hot{position:absolute;width:36px;height:36px;border-radius:50%;background:rgba(0,243,255,.95);color:#000;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid #fff;box-shadow:0 0 16px #00f3ff;cursor:pointer;z-index:10;animation:pulse 1.5s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
 #panel{background:#03121e;border:1px solid #00f3ff;margin:10px;border-radius:14px;padding:14px;display:none}
 #panel.show{display:block}
-#panel h2{color:#00f3ff;font-size:14px;text-align:center;letter-spacing:1px}
-#panel h3{color:#fff;font-size:16px;margin-top:6px}
+#panel h2{color:#00f3ff;font-size:13px;text-align:center;letter-spacing:1px}
+#panel h3{color:#fff;font-size:17px;margin-top:6px}
 #panel p{color:#d0e0f0;font-size:13px;line-height:1.5;margin-top:6px}
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
 td,th{border:1px solid rgba(0,243,255,.25);padding:7px;text-align:left}
@@ -33,21 +36,25 @@ td{color:#e0f0ff}
 </style>
 </head>
 <body>
-<div class="top"><h1><b>HOLOGRAM</b> SHIP - PREMIUM 3D</h1><p>DRAG TO ROTATE • TAP ANY PART FOR DIMENSION</p></div>
+<div class="top"><h1><b>HOLOGRAM</b> SHIP - PREMIUM 3D</h1><p>DRAG TO ROTATE • TAP + DOT FOR DIMENSION</p></div>
 <div class="btns">
-<button class="active" onclick="setView('3d',this)">🔄 3D</button>
-<button onclick="setView('side',this)">➡️ SIDE</button>
-<button onclick="setView('front',this)">⬆️ BOW</button>
-<button onclick="setView('top',this)">⬇️ TOP</button>
-<button id="spinBtn" onclick="toggleSpin()">⏸️ ROTATE</button>
+<button class="active" onclick="tilt(0,this)">🔄 3D</button>
+<button onclick="tilt(-25,this)">➡️ SIDE</button>
+<button onclick="tilt(25,this)">⬆️ BOW</button>
+<button onclick="resetTilt(this)">↩️ RESET</button>
 </div>
-<div id="box"></div>
-<p class="hint">👆 Ungli se ghumao • Kisi part pe tap karo</p>
+<div id="stage">
+<img id="shipImg" src="ship.png" alt="Hologram Ship">
+<div class="hot" style="left:72%;top:26%" onclick="showInfo('accom')">+</div>
+<div class="hot" style="left:68%;top:52%;background:#ff0055;color:#fff" onclick="showInfo('engine')">+</div>
+<div class="hot" style="left:42%;top:46%" onclick="showInfo('hold1')">+</div>
+<div class="hot" style="left:45%;top:68%;background:#00ff66;color:#000" onclick="showInfo('db')">+</div>
+<div class="hot" style="left:10%;top:60%;background:#ffd700;color:#000" onclick="showInfo('bow')">+</div>
+</div>
+<p class="hint">👆 Photo ko ungli se ghumao • + dot pe tap karo</p>
 
 <div id="panel">
-<h2 id="pCat">DOUBLE BOTTOM TANK — DIMENSIONS</h2>
-<h3 id="pTitle"></h3>
-<p id="pDesc"></p>
+<h2 id="pCat"></h2><h3 id="pTitle"></h3><p id="pDesc"></p>
 <table id="pDim"></table>
 <div class="fbox"><b>🏗️ STRUCTURE / FRAME DESIGN</b><br><span id="pFrame"></span></div>
 <div class="fbox"><b>📐 SECTION VIEW</b><br><span id="pSection"></span></div>
@@ -57,103 +64,26 @@ td{color:#e0f0ff}
 <div class="card" onclick="showInfo('engine')"><h3>⚙️ Engine Room - Tap karo</h3><p>Main Engine, CO2 System, Fire Pumps</p></div>
 <div class="card" onclick="showInfo('hold1')"><h3>📦 Cargo Hold - Tap karo</h3><p>Hatch Cover, Containers, Hopper Tank</p></div>
 <div class="card" onclick="showInfo('db')"><h3>⬇️ Double Bottom - Tap karo</h3><p>1.5m Height, Duct Keel, Ballast</p></div>
-<div class="card" onclick="showInfo('bow')"><h3>🟡 Bow + Bulbous Bow - Tap karo</h3><p>Sharp Raked Bow, Underwater Bulb</p></div>
+<div class="card" onclick="showInfo('bow')"><h3>🟡 Bow - Tap karo</h3><p>Sharp Raked Bow, Underwater Bulb</p></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 var DATA={
-hull:{cat:"HULL — DIMENSIONS",t:"HULL - Main Ship Body",d:"Real Bulk Carrier Hull. Dark Blue steel, Red bottom below waterline. Sharp raked bow, transom stern.",dim:[["Length LOA","140 m"],["Beam","22 m"],["Depth","12.5 m"],["Draft","8.0 m"],["Steel Plate","AH36 12-20 mm"],["Block Coeff.","0.78"]],f:"Centre Girder 1200x12mm | Side Longitudinals @750mm | Transverse Frame @3000mm | Double Bottom 1.5m | Frame Spacing 800mm",s:"MIDSHIP SECTION: [Deck 12mm] - [Side Shell 14mm] - [Double Bottom 1.5m] - [Centre Girder] | Width 22m, Depth 12.5m"},
-accom:{cat:"ACCOMMODATION — DIMENSIONS",t:"ACCOMMODATION - White Superstructure",d:"Crew cabins, Navigation Bridge with full glass, Fire Control Station. 5-tier white deckhouse.",dim:[["Length","18 m"],["Breadth","20 m"],["Height","15 m (5 Decks)"],["Deck Height","2.8 m Each"],["Bulkhead","A-60 6mm + 50mm Insul."],["Windows","Toughened Glass"]],f:"Pillars + Deck Beams @2.4m | Bulkhead Stiffeners 100x8 @600mm | Bridge Wings 2m each side | Stair + Lift centre",s:"SIDE: [Bridge Glass] - [Deck D] - [Deck C] - [Deck B] - [Deck A] - Main Deck"},
-engine:{cat:"ENGINE ROOM — DIMENSIONS",t:"ENGINE ROOM - Machinery Space",d:"Main Engine, Generators, Fire Pumps. Sabse critical zone. CO2 Fixed System se protected.",dim:[["Length","22 m"],["Breadth","20 m"],["Height","10 m"],["Main Engine","MAN 12,000 kW"],["Generators","3 x 1200 kW"],["Fire Pumps","2 Main + 1 Emergency"]],f:"Heavy Transverse Bulkhead 12mm | Engine Foundation Girders 800mm high | Vibration Dampers | Engine Casing",s:"CROSS: [Funnel Casing] - [Engine Top] - [Main Engine Block] - [Tank Top / Double Bottom] | Shaft line centre"},
-hold1:{cat:"CARGO HOLD — DIMENSIONS",t:"CARGO HOLD NO.1 - Forward Hold",d:"Bulk cargo + Containers. Rust-red hatch covers, Hopper tanks for ballast.",dim:[["Length","28 m"],["Breadth","19 m"],["Depth","10 m"],["Hatch Size","24m x 14m"],["Capacity","4,500 m3"],["Hatch Cover","Hydraulic Steel"]],f:"Side Frames T-Bar 300x12 @750mm | Hopper Tank 45° Sloped | Topside Tank | Corrugated Bulkhead 10mm",s:"HOLD SECTION: [Hatch Coaming 1.2m] - [Hold Space] - [Hopper 45°] - [Double Bottom] | U-Shape"},
-db:{cat:"DOUBLE BOTTOM TANK — DIMENSIONS",t:"DOUBLE BOTTOM TANK",d:"Grounding se bachane ke liye 1.5m double bottom. Fuel + Ballast water.",dim:[["Height","1.5 m"],["Length","95 m"],["Centre Girder","1200 x 12mm"],["Solid Floors","Every 3000mm"],["Ballast Cap.","2,800 Tonnes"],["Tank Volume","2,400 m3"]],f:"Centre Girder + Side Girders + Solid Floors + Bracket Floors | Manhole 600x400mm | Duct Keel centre me pipe ke liye | Frame: 800mm spacing, Plate: 15mm",s:"DB SECTION: [Tank Top Plating 12mm] - [1.5m Void] - [Bottom Plating 14mm] | Longitudinal + Transverse"},
-fore:{cat:"FORE PEAK — DIMENSIONS",t:"FORE PEAK TANK",d:"Collision Bulkhead ke aage ka tank. Collision me paani yahi rukta hai.",dim:[["Length","12 m"],["Bulkhead","Keel to Main Deck"],["Plate","14 mm"]],f:"Collision Bulkhead Watertight | Panting Beams + Breast Hooks | Heavy Stringers",s:"FORE: Narrow V, Collision Bulkhead Vertical"},
-bow:{cat:"BOW — DIMENSIONS",t:"BOW + BULBOUS BOW",d:"Sharp raked stem upar. Bulb paani ke neeche chhota sa hai - bahar se dikhta hi nahi, sirf wave kam karta hai.",dim:[["Stem Rake","15 Degree"],["Bulb Length","4 m"],["Bulb Dia","1.8 m"],["Thruster Tunnel","1.8 m Dia"],["Thruster Power","800 kW"],["Fuel Saving","12-15%"]],f:"Raked Stem Plate 14mm | Bulb Welded to Stem Below Waterline | Thruster Tunnel Transverse Pipe 12mm",s:"BOW: [Raked Stem] - [Bulb Below Waterline - Hidden] - [Thruster Tunnel]"},
-funnel:{cat:"FUNNEL — DIMENSIONS",t:"FUNNEL - Red with Black Top",d:"Exhaust gas bahar nikalne ke liye. Red funnel, black top.",dim:[["Height","9 m"],["Dia","3.5 m"],["Casing","10mm Steel"]],f:"Uptake Pipes Inside | Insulated Double Wall Casing",s:"FUNNEL: Double Wall, Uptake Inside"}
+accom:{cat:"ACCOMMODATION — DIMENSIONS",t:"ACCOMMODATION - White Superstructure",d:"Crew cabins, Navigation Bridge with full glass, Fire Control Station. 5-tier white deckhouse.",dim:[["Length","18 m"],["Breadth","20 m"],["Height","15 m (5 Decks)"],["Bulkhead","A-60 6mm + 50mm Insul."],["Windows","Toughened Glass"]],f:"Pillars + Deck Beams @2.4m | Bulkhead Stiffeners 100x8 @600mm | Bridge Wings 2m each side",s:"SIDE: [Bridge Glass] - [Deck D] - [Deck C] - [Deck B] - [Deck A] - Main Deck"},
+engine:{cat:"ENGINE ROOM — DIMENSIONS",t:"ENGINE ROOM - Machinery Space",d:"Main Engine, Generators, Fire Pumps. CO2 Fixed System se protected.",dim:[["Length","22 m"],["Breadth","20 m"],["Height","10 m"],["Main Engine","MAN 12,000 kW"],["Generators","3 x 1200 kW"]],f:"Heavy Transverse Bulkhead 12mm | Engine Foundation Girders 800mm high | Vibration Dampers",s:"CROSS: [Funnel Casing] - [Engine Top] - [Main Engine] - [Tank Top]"},
+hold1:{cat:"CARGO HOLD — DIMENSIONS",t:"CARGO HOLD NO.1 - Forward Hold",d:"Bulk cargo + Containers. Rust-red hatch covers, Hopper tanks.",dim:[["Length","28 m"],["Breadth","19 m"],["Depth","10 m"],["Hatch Size","24m x 14m"],["Capacity","4,500 m3"]],f:"Side Frames T-Bar 300x12 @750mm | Hopper Tank 45° Sloped | Corrugated Bulkhead 10mm",s:"HOLD SECTION: [Hatch Coaming 1.2m] - [Hold Space] - [Hopper 45°] - [Double Bottom]"},
+db:{cat:"DOUBLE BOTTOM TANK — DIMENSIONS",t:"DOUBLE BOTTOM TANK",d:"Grounding se bachane ke liye 1.5m double bottom. Fuel + Ballast water.",dim:[["Length (LOA)","215.0 m"],["Breadth (Moulded)","32.2 m"],["Depth (Moulded)","18.5 m"],["Tank Capacity","12,400 m3"],["Frame Spacing","600 mm"],["DB Height","1.5 m"]],f:"Centre Girder 1200x12mm | Side Girders + Solid Floors + Bracket Floors | Manhole 600x400mm | Duct Keel centre me pipe ke liye | Frame: 600mm spacing, Plate: 15mm",s:"DB SECTION: [Tank Top Plating 12mm] - [1.5m Void] - [Bottom Plating 14mm] | Longitudinal + Transverse"},
+bow:{cat:"BOW — DIMENSIONS",t:"BOW + BULBOUS BOW",d:"Sharp raked stem upar. Bulb paani ke neeche chhota sa hai - bahar se dikhta hi nahi, sirf wave kam karta hai.",dim:[["Stem Rake","15 Degree"],["Bulb Length","4 m"],["Bulb Dia","1.8 m"],["Thruster Tunnel","1.8 m Dia"],["Fuel Saving","12-15%"]],f:"Raked Stem Plate 14mm | Bulb Welded to Stem Below Waterline | Thruster Tunnel Transverse Pipe 12mm",s:"BOW: [Raked Stem] - [Bulb Below Waterline - Hidden] - [Thruster Tunnel]"}
 };
-function showInfo(k){
-var d=DATA[k]; if(!d) return;
-document.getElementById('panel').className='show';
-document.getElementById('pCat').innerText=d.cat;
-document.getElementById('pTitle').innerText=d.t;
-document.getElementById('pDesc').innerText=d.d;
-document.getElementById('pFrame').innerText=d.f;
-document.getElementById('pSection').innerText=d.s;
-document.getElementById('pDim').innerHTML='<tr><th>PARAMETER</th><th>VALUE</th></tr>'+d.dim.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('');
-document.getElementById('panel').scrollIntoView({behavior:'smooth'});
-}
-var container=document.getElementById('box');
-var scene=new THREE.Scene(); scene.background=new THREE.Color(0x071a28);
-scene.fog=new THREE.Fog(0x071a28,220,450);
-var camera=new THREE.PerspectiveCamera(50, container.clientWidth/container.clientHeight, 0.1, 1000);
-camera.position.set(130,75,155);
-var renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(container.clientWidth, container.clientHeight); container.appendChild(renderer.domElement);
-var controls=new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping=true; controls.autoRotate=true; controls.autoRotateSpeed=0.6; controls.maxPolarAngle=Math.PI*0.55;
-scene.add(new THREE.AmbientLight(0xffffff,0.9));
-var sun=new THREE.DirectionalLight(0xffffff,1.15); sun.position.set(100,150,100); scene.add(sun);
-var fill=new THREE.DirectionalLight(0x00f3ff,0.35); fill.position.set(-100,50,-100); scene.add(fill);
-var ship=new THREE.Group(); scene.add(ship);
-var clickables=[];
-function add(geo,color,key,x,y,z,rough){
-var m=new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color:color,roughness:rough||0.55,metalness:0.15}));
-m.position.set(x,y,z); m.userData.key=key; ship.add(m); clickables.push(m); return m;
-}
-// HULL - Real Shape
-var s=new THREE.Shape();
-s.moveTo(-72,0); s.lineTo(-72,11); s.lineTo(28,11); s.lineTo(60,9); s.lineTo(74,3); s.lineTo(66,0); s.lineTo(-60,0); s.quadraticCurveTo(-72,0,-72,0);
-var hullGeo=new THREE.ExtrudeGeometry(s,{depth:20,bevelEnabled:true,bevelThickness:1.5,bevelSize:1.5,bevelSegments:3});
-hullGeo.translate(0,0,-10);
-add(hullGeo,0x0b2f4a,'hull',0,0,0,0.45);
-add(new THREE.BoxGeometry(110,2.5,19),0x8a1a1a,'hull',-5,-0.5,0,0.6);
-add(new THREE.BoxGeometry(138,0.8,21),0x2a3d4a,'hold1',0,12,0,0.7);
-add(new THREE.BoxGeometry(138,1.2,0.6),0x0b2f4a,'hull',0,13,-10,0.6);
-add(new THREE.BoxGeometry(138,1.2,0.6),0x0b2f4a,'hull',0,13,10,0.6);
-// Hatch Covers - Rust Red
-add(new THREE.BoxGeometry(28,2.2,17),0x9a3a2a,'hold1',30,13.5,0,0.6);
-add(new THREE.BoxGeometry(28,2.2,17),0x9a3a2a,'hold1',0,13.5,0,0.6);
-add(new THREE.BoxGeometry(20,2.2,17),0x9a3a2a,'hold1',-22,13.5,0,0.6);
-// Containers
-var cols=[0x2a9d8f,0xe76f51,0xe9c46a,0x264653,0x2a9d8f];
-for(var i=0;i<5;i++){ add(new THREE.BoxGeometry(6,2.6,7),cols[i],'hold1',5+i*7,15.5,-5,0.6); add(new THREE.BoxGeometry(6,2.6,7),cols[4-i],'hold1',5+i*7,15.5,4,0.6); }
-// Accommodation - White
-add(new THREE.BoxGeometry(16,12,18),0xf2f2f2,'accom',-52,18,0,0.5);
-add(new THREE.BoxGeometry(19,2,20),0xf2f2f2,'accom',-52,24.5,0,0.5);
-add(new THREE.BoxGeometry(19.5,1.8,20.5),0x0a1a2a,'accom',-52,24.5,0,0.2);
-for(var w=0;w<3;w++){ add(new THREE.BoxGeometry(16.5,0.8,18.5),0x1a3a4a,'accom',-52,17+w*3,0,0.3); }
-// Funnel
-add(new THREE.CylinderGeometry(2.8,3.2,9,20),0xd9202e,'funnel',-52,30,0,0.5);
-add(new THREE.CylinderGeometry(2.85,2.85,1.5,20),0x111111,'funnel',-52,35,0,0.5);
-// Mast
-add(new THREE.CylinderGeometry(0.3,0.6,16,8),0xffffff,'accom',-38,22,0,0.5);
-add(new THREE.BoxGeometry(4,0.4,0.4),0xffffff,'accom',-38,29,0,0.5);
-// Bow Bulb - Chhota, paani ke neeche chhupa
-var bulb=new THREE.Mesh(new THREE.SphereGeometry(2,14,10), new THREE.MeshStandardMaterial({color:0x0b2f4a,roughness:0.4}));
-bulb.scale.set(2.2,0.7,0.7); bulb.position.set(76,-1,0); bulb.userData.key='bow'; ship.add(bulb); clickables.push(bulb);
-add(new THREE.CylinderGeometry(0.8,0.8,1,10),0x333333,'bow',68,10,0,0.5);
-add(new THREE.BoxGeometry(6,3,6),0x666666,'engine',-38,14,0,0.6);
-// Sea + Ring
-var sea=new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshStandardMaterial({color:0x0a2a3a,roughness:0.2,metalness:0.4,transparent:true,opacity:0.9}));
-sea.rotation.x=-Math.PI/2; sea.position.y=-2.5; scene.add(sea);
-var ring=new THREE.Mesh(new THREE.TorusGeometry(95,0.4,8,100), new THREE.MeshBasicMaterial({color:0x00f3ff,transparent:true,opacity:0.45})); ring.rotation.x=Math.PI/2; ring.position.y=-2; scene.add(ring);
-var ray=new THREE.Raycaster(); var mouse=new THREE.Vector2();
-renderer.domElement.addEventListener('click', function(e){
-var r=renderer.domElement.getBoundingClientRect();
-mouse.x=((e.clientX-r.left)/r.width)*2-1; mouse.y=-((e.clientY-r.top)/r.height)*2+1;
-ray.setFromCamera(mouse,camera); var hits=ray.intersectObjects(clickables,false);
-if(hits.length) showInfo(hits[0].object.userData.key);
-});
-function setView(v,btn){
-document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')}); if(btn) btn.classList.add('active');
-controls.autoRotate=false; document.getElementById('spinBtn').innerText='▶️ ROTATE';
-if(v==='3d') camera.position.set(130,75,155);
-if(v==='side') camera.position.set(0,30,180);
-if(v==='front') camera.position.set(180,25,0);
-if(v==='top') camera.position.set(0,200,0.1);
-}
-function toggleSpin(){ controls.autoRotate=!controls.autoRotate; document.getElementById('spinBtn').innerText=controls.autoRotate?'⏸️ ROTATE':'▶️ ROTATE'; }
-function animate(){ requestAnimationFrame(animate); ship.position.y=Math.sin(Date.now()*0.001)*0.6; ship.rotation.z=Math.sin(Date.now()*0.001)*0.005; controls.update(); renderer.render(scene,camera); } animate();
-setTimeout(function(){ showInfo('db'); }, 900);
+function showInfo(k){var d=DATA[k];document.getElementById('panel').className='show';document.getElementById('pCat').innerText=d.cat;document.getElementById('pTitle').innerText=d.t;document.getElementById('pDesc').innerText=d.d;document.getElementById('pFrame').innerText=d.f;document.getElementById('pSection').innerText=d.s;document.getElementById('pDim').innerHTML='<tr><th>PARAMETER</th><th>VALUE</th></tr>'+d.dim.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('');document.getElementById('panel').scrollIntoView({behavior:'smooth'});}
+var img=document.getElementById('shipImg'), rx=0, ry=0, sx=0, sy=0, drag=false;
+function tilt(v,btn){document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');ry=v;apply();}
+function resetTilt(btn){document.querySelectorAll('.btns button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');rx=0;ry=0;apply();}
+function apply(){img.style.transform='rotateY('+ry+'deg) rotateX('+rx+'deg) scale(1.04)';}
+var stage=document.getElementById('stage');
+stage.addEventListener('touchstart',function(e){drag=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY;});
+stage.addEventListener('touchmove',function(e){if(!drag)return;ry+=(e.touches[0].clientX-sx)*0.3;rx-=(e.touches[0].clientY-sy)*0.2;if(rx>20)rx=20;if(rx<-20)rx=-20;if(ry>45)ry=45;if(ry<-45)ry=-45;sx=e.touches[0].clientX;sy=e.touches[0].clientY;apply();});
+stage.addEventListener('touchend',function(){drag=false;});
+setTimeout(function(){showInfo('db')},800);
 </script>
 </body>
 </html>
