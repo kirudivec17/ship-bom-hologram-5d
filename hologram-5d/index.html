@@ -1,236 +1,750 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CODE SHIP - KEEL TO MAST - NO PHOTO</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
-body{background:#060d14;color:#fff;overflow-x:hidden}
-.top{text-align:center;padding:12px}
-.top h1{font-size:19px;color:#ffd89a}.top h1 b{color:#00f3ff}
-.top p{font-size:11px;color:#8ab4f8}
-.calc{background:#0a1a2a;margin:10px;border:1px solid #00f3ff;border-radius:14px;padding:12px}
-.calc h3{font-size:12px;color:#00f3ff;text-align:center}
-.row{display:flex;gap:8px;margin-top:10px}
-.row label{flex:1;font-size:11px;color:#ccc}
-.row input{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#020a12;color:#fff;font-weight:800;font-size:15px;margin-top:4px}
-.calcBtn{width:100%;background:linear-gradient(90deg,#00f3ff,#ffd700);color:#000;border:none;padding:11px;border-radius:10px;font-weight:800;margin-top:10px}
-.res{background:#020a12;border:1px dashed #00f3ff;border-radius:10px;padding:10px;margin-top:10px;font-size:12px;line-height:1.7}
-.res span{color:#00f3ff;font-weight:700}
-#view{margin:10px;height:52vh;border:1px solid #00f3ff;border-radius:16px;overflow:hidden;position:relative;background:#020a12;box-shadow:0 0 25px rgba(0,243,255,.35);touch-action:none}
-#view canvas{width:100%!important;height:100%!important;display:block}
-.badge{position:absolute;left:10px;bottom:10px;background:rgba(0,0,0,.75);border:1px solid #00f3ff;padding:6px 10px;border-radius:20px;font-size:11px;color:#00f3ff;font-weight:700;z-index:5}
-.tag{position:absolute;right:10px;top:10px;background:#ff4400;color:#fff;padding:6px 10px;border-radius:20px;font-size:11px;font-weight:800;z-index:5}
-.zoomBar{display:flex;gap:6px;justify-content:center;padding:6px;flex-wrap:wrap}
-.zoomBar button{background:#111f2e;border:1px solid #00f3ff;color:#ffd89a;padding:9px 12px;border-radius:20px;font-size:11px;font-weight:700}
-.zoomBar button.active{background:#00f3ff;color:#000}
-.progress{margin:10px;background:#0a1a2a;border-radius:12px;padding:12px;border:1px solid #333}
-.bar{height:10px;background:#222;border-radius:10px;margin:8px 0;overflow:hidden}.bar i{display:block;height:100%;background:linear-gradient(90deg,#00f3ff,#ffd700);transition:.5s}
-.steps{margin:10px}
-.step{border:1px solid #333;border-radius:12px;padding:12px;margin-bottom:8px;background:#0a1a2a;cursor:pointer}
-.step.active{border-color:#00f3ff;background:#0a2a3a}
-.step h4{font-size:14px}.step p{font-size:12px;color:#aaa;margin-top:3px;line-height:1.5}
-.plateBtns{display:flex;gap:6px;flex-wrap:wrap;margin:10px;justify-content:center}
-.plateBtns button{background:#111f2e;border:1px solid #555;color:#fff;padding:11px 13px;border-radius:10px;font-weight:700}
-.plateBtns button.on{background:#00ff66;color:#000}
-#detail{background:#03121e;border:1px solid #00f3ff;margin:10px;border-radius:14px;padding:14px;display:none}
-#detail.show{display:block}
-#detail h2{color:#00f3ff;font-size:13px;text-align:center}
-#detail p{font-size:13px;color:#d0e0f0;line-height:1.6;margin-top:6px}
-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}td,th{border:1px solid rgba(0,243,255,.25);padding:7px}
-.hint{text-align:center;font-size:11px;color:#8ab4f8;padding:5px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holographic Ship Construction & Blueprint CAD Simulator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js Library & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #030712; color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        /* Grid Overlay Effect */
+        .holo-overlay {
+            background: linear-gradient(rgba(6, 182, 212, 0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(6, 182, 212, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Sidebar & Panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+
+        /* Footprint Walkthrough Node Pulsing */
+        .nav-node {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(6, 182, 212, 0.8);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 15px #06b6d4;
+            animation: pulse 1.8s infinite;
+            cursor: pointer;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.7); }
+            70% { transform: scale(1.15); box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+        }
+    </style>
 </head>
-<body>
-<div class="top"><h1><b>CODE SHIP</b> - KEEL TO MAST</h1><p>NO PHOTO • PURE CODE 3D • PHOTO JAISA LOOK</p></div>
+<body class="select-none overflow-hidden">
 
-<div class="calc">
-<h3>⚓ SHIP SIZE - KEEL ISI SE BANEGI</h3>
-<div class="row"><label>DWT<input id="dwt" type="number" value="82000"></label><label>LOA (m)<input id="loa" type="number" value="215"></label></div>
-<div class="row"><label>Beam (m)<input id="beam" type="number" value="32.2"></label><label>Depth (m)<input id="depth" type="number" value="18.5"></label></div>
-<button class="calcBtn" onclick="calcKeel()">🧮 KEEL CALCULATE KARO</button>
-<div class="res" id="calcRes">Calculate dabao</div>
-</div>
+    <!-- 3D WebGL Canvas Layer -->
+    <div id="canvas-container"></div>
+    <div class="holo-overlay absolute inset-0 z-10"></div>
 
-<div id="view"><div class="badge">● CODE 3D • DRAG TO ROTATE • PINCH TO ZOOM</div><div class="tag" id="plateTag">PLATE 0 / 5</div></div>
-<p class="hint">👆 Ship ko ungli se ghumao • Zoom button se Keel / Midship / Bow pe jao</p>
+    <!-- UI Overlay Layer -->
+    <div class="relative z-20 flex h-screen w-screen overflow-hidden pointer-events-none">
 
-<div class="zoomBar">
-<button onclick="zoomTo('keel',this)">🔍 ZOOM KEEL</button>
-<button class="active" onclick="zoomTo('mid',this)">🔍 ZOOM MIDSHIP</button>
-<button onclick="zoomTo('bow',this)">🔍 ZOOM BOW</button>
-<button onclick="zoomTo('mast',this)">🔍 ZOOM MAST</button>
-<button onclick="zoomTo('full',this)">↩️ FULL</button>
-</div>
+        <!-- LEFT SIDEBAR: Modular Construction Parts Palette -->
+        <div class="w-80 h-full glass-panel flex flex-col pointer-events-auto transition-all duration-300">
+            <!-- Header & Ship Type Selector -->
+            <div class="p-4 border-b border-cyan-500/30">
+                <h1 class="text-lg font-bold text-cyan-400 flex items-center gap-2">
+                    <i class="fa-solid fa-ship"></i> HOLO-SHIP BUILDER
+                </h1>
+                <p class="text-xs text-gray-400 mt-1">Select Vessel Type & Install Components</p>
+                
+                <!-- Ship Type Dropdown -->
+                <div class="mt-3">
+                    <label class="text-xs font-semibold text-gray-300">Vessel Class:</label>
+                    <select id="shipTypeSelect" onchange="changeShipType(this.value)" class="w-full mt-1 bg-slate-900 border border-cyan-500/40 text-cyan-300 text-sm rounded px-3 py-1.5 focus:outline-none focus:border-cyan-400">
+                        <option value="LPG">LPG / Ethylene Carrier (Gas Fleet)</option>
+                        <option value="CONTAINER">Ultra Large Container Vessel (ULCV)</option>
+                        <option value="TANKER">Suezmax Crude Oil Tanker</option>
+                        <option value="BULKER">Capesize Bulk Carrier</option>
+                    </select>
+                </div>
+            </div>
 
-<div class="progress">
-<h3>⚖️ STEEL BUILT - <span id="tonTxt">0 / 18450 Tonnes</span></h3>
-<div class="bar"><i id="tonBar" style="width:0%"></i></div>
-<p style="font-size:12px;color:#aaa"><span id="pctTxt">0%</span> • Hull: <b id="daysTxt">180 days</b> • Total ~18 Months</p>
-</div>
+            <!-- Categories Accordion Tabs -->
+            <div class="flex-1 overflow-y-auto p-3 space-y-2" id="partsTabContainer">
+                
+                <!-- Category 1: Hull Structure & Framing -->
+                <div class="border border-cyan-500/20 rounded bg-slate-900/50 overflow-hidden">
+                    <button onclick="toggleAccordion('cat-hull')" class="w-full p-3 text-left font-semibold text-cyan-300 text-sm bg-slate-800/60 hover:bg-slate-800 flex justify-between items-center">
+                        <span><i class="fa-solid fa-layer-group mr-2"></i> Hull & Steel Framing</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="cat-hull" class="p-2 space-y-1 text-xs">
+                        <button onclick="installPart('keel')" id="btn-keel" class="w-full text-left p-2 rounded bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-200 flex justify-between items-center">
+                            <span>Main Keel & Bottom Plating</span>
+                            <span class="text-gray-400 font-mono">Installed</span>
+                        </button>
+                        <button onclick="installPart('doubleBottom')" id="btn-doubleBottom" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Double Bottom Tanks</span>
+                            <span class="text-xs text-yellow-500 font-mono">+1,200 T</span>
+                        </button>
+                        <button onclick="installPart('bulkheads')" id="btn-bulkheads" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Watertight Bulkheads</span>
+                            <span class="text-xs text-yellow-500 font-mono">+850 T</span>
+                        </button>
+                        <button onclick="installPart('sideShell')" id="btn-sideShell" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Side Shell Framing & Girders</span>
+                            <span class="text-xs text-yellow-500 font-mono">+2,100 T</span>
+                        </button>
+                    </div>
+                </div>
 
-<div class="plateBtns">
-<button onclick="addPlate(1,this)">+ PLATE 1 BOTTOM</button>
-<button onclick="addPlate(2,this)">+ PLATE 2 BILGE</button>
-<button onclick="addPlate(3,this)">+ PLATE 3 SIDE</button>
-<button onclick="addPlate(4,this)">+ PLATE 4 SHEER</button>
-<button onclick="addPlate(5,this)">+ PLATE 5 DECK</button>
-<button onclick="resetBuild()" style="background:#ff0055;color:#fff">RESET</button>
-</div>
+                <!-- Category 2: Propulsion & Machinery -->
+                <div class="border border-cyan-500/20 rounded bg-slate-900/50 overflow-hidden">
+                    <button onclick="toggleAccordion('cat-engine')" class="w-full p-3 text-left font-semibold text-cyan-300 text-sm bg-slate-800/60 hover:bg-slate-800 flex justify-between items-center">
+                        <span><i class="fa-solid fa-gears mr-2"></i> Engine & Propulsion</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="cat-engine" class="p-2 space-y-1 text-xs hidden">
+                        <button onclick="installPart('mainEngine')" id="btn-mainEngine" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>2-Stroke Main Diesel Engine</span>
+                            <span class="text-xs text-yellow-500 font-mono">+680 T</span>
+                        </button>
+                        <button onclick="installPart('propeller')" id="btn-propeller" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Propeller Shaft & Shaft Line</span>
+                            <span class="text-xs text-yellow-500 font-mono">+120 T</span>
+                        </button>
+                        <button onclick="installPart('generators')" id="btn-generators" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Auxiliary Gensets (3x Diesel)</span>
+                            <span class="text-xs text-yellow-500 font-mono">+95 T</span>
+                        </button>
+                    </div>
+                </div>
 
-<div class="steps">
-<div class="step active" onclick="gotoStep(0,this)"><h4>1. KEEL LAYING</h4><p>Keel Blocks pe Centre Girder. Ship ki reedh ki haddi. DWT se size nikalta hai.</p></div>
-<div class="step" onclick="gotoStep(1,this)"><h4>2. KANKAL - FRAMES @800mm</h4><p>Keel pe pasli jaisi frames khadi hoti hai. Yehi kankal hai.</p></div>
-<div class="step" onclick="gotoStep(2,this)"><h4>3. SIDE PLATES 1 BY 1</h4><p>Bottom → Bilge → Side → Sheer. Ek-ek plate weld hoti hai.</p></div>
-<div class="step" onclick="gotoStep(3,this)"><h4>4. DECK + MAIN MAST</h4><p>Deck, Accommodation, Funnel, Main Mast - sab code se banta hai.</p></div>
-</div>
+                <!-- Category 3: Piping & Cable Systems -->
+                <div class="border border-cyan-500/20 rounded bg-slate-900/50 overflow-hidden">
+                    <button onclick="toggleAccordion('cat-piping')" class="w-full p-3 text-left font-semibold text-cyan-300 text-sm bg-slate-800/60 hover:bg-slate-800 flex justify-between items-center">
+                        <span><i class="fa-solid fa-diagram-project mr-2"></i> Piping & Cable Routing</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="cat-piping" class="p-2 space-y-1 text-xs hidden">
+                        <button onclick="installPart('fuelLine')" id="btn-fuelLine" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span><i class="fa-solid fa-circle text-amber-500 mr-1"></i> Heavy Fuel Oil (HFO) Lines</span>
+                            <span class="text-xs text-yellow-500 font-mono">+45 T</span>
+                        </button>
+                        <button onclick="installPart('seaWaterLine')" id="btn-seaWaterLine" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span><i class="fa-solid fa-circle text-blue-500 mr-1"></i> Sea Water Cooling System</span>
+                            <span class="text-xs text-yellow-500 font-mono">+38 T</span>
+                        </button>
+                        <button onclick="installPart('freshWaterLine')" id="btn-freshWaterLine" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span><i class="fa-solid fa-circle text-teal-400 mr-1"></i> Fresh Water Hydrophore Network</span>
+                            <span class="text-xs text-yellow-500 font-mono">+22 T</span>
+                        </button>
+                        <button onclick="installPart('electricalTrunk')" id="btn-electricalTrunk" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span><i class="fa-solid fa-bolt text-yellow-400 mr-1"></i> Main Cable Trays & Power Busbars</span>
+                            <span class="text-xs text-yellow-500 font-mono">+15 T</span>
+                        </button>
+                    </div>
+                </div>
 
-<div id="detail"><h2 id="dCat"></h2><h3 id="dTitle"></h3><p id="dDesc"></p><table id="dTable"></table></div>
+                <!-- Category 4: Accommodation & Superstructure -->
+                <div class="border border-cyan-500/20 rounded bg-slate-900/50 overflow-hidden">
+                    <button onclick="toggleAccordion('cat-accom')" class="w-full p-3 text-left font-semibold text-cyan-300 text-sm bg-slate-800/60 hover:bg-slate-800 flex justify-between items-center">
+                        <span><i class="fa-solid fa-building mr-2"></i> Accommodation & Rooms</span>
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                    <div id="cat-accom" class="p-2 space-y-1 text-xs hidden">
+                        <button onclick="installPart('superstructure')" id="btn-superstructure" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Superstructure Block (5 Decks)</span>
+                            <span class="text-xs text-yellow-500 font-mono">+750 T</span>
+                        </button>
+                        <button onclick="installPart('bridge')" id="btn-bridge" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Wheelhouse / Nav Bridge</span>
+                            <span class="text-xs text-yellow-500 font-mono">+180 T</span>
+                        </button>
+                        <button onclick="installPart('cabins')" id="btn-cabins" class="w-full text-left p-2 rounded bg-slate-800/40 hover:bg-slate-700/60 border border-gray-700 text-gray-300 flex justify-between items-center">
+                            <span>Crew Cabins & Galley Interior</span>
+                            <span class="text-xs text-yellow-500 font-mono">+60 T</span>
+                        </button>
+                    </div>
+                </div>
 
-<script>
-// ---------- THREE.JS - PURE CODE SHIP, NO PHOTO ----------
-var scene=new THREE.Scene();
-scene.background=new THREE.Color(0x020a12);
-scene.fog=new THREE.Fog(0x020a12,18,35);
-var camera=new THREE.PerspectiveCamera(45,1,0.1,100);
-camera.position.set(9,5,11);
-var renderer=new THREE.WebGLRenderer({antialias:true});
-var view=document.getElementById('view');
-view.appendChild(renderer.domElement);
-function resize(){var w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
-window.addEventListener('resize',resize);resize();
-scene.add(new THREE.AmbientLight(0xffffff,0.7));
-var l1=new THREE.DirectionalLight(0x00f3ff,0.9);l1.position.set(5,10,5);scene.add(l1);
-var l2=new THREE.DirectionalLight(0xffd700,0.6);l2.position.set(-5,5,-5);scene.add(l2);
-var ship=new THREE.Group();scene.add(ship);
-// Ground - Dry Dock
-var dock=new THREE.Mesh(new THREE.BoxGeometry(22,0.3,8),new THREE.MeshStandardMaterial({color:0x1a2a3a,roughness:0.9}));dock.position.y=-2.2;scene.add(dock);
-for(var i=-10;i<=10;i+=2){var b=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.8,4),new THREE.MeshStandardMaterial({color:0x333333}));b.position.set(i,-1.7,0);scene.add(b);}
-// Materials - Real Ship Colors
-var matKeel=new THREE.MeshStandardMaterial({color:0xff4400,metalness:0.6,roughness:0.4});
-var matFrame=new THREE.MeshStandardMaterial({color:0xffb400,metalness:0.5,roughness:0.5});
-var matHull=new THREE.MeshStandardMaterial({color:0x8a1a1a,metalness:0.7,roughness:0.35});
-var matHull2=new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:0.7,roughness:0.35});
-var matDeck=new THREE.MeshStandardMaterial({color:0x2a4a2a,metalness:0.4,roughness:0.6});
-var matWhite=new THREE.MeshStandardMaterial({color:0xeeeeee,metalness:0.3,roughness:0.4});
-var matMast=new THREE.MeshStandardMaterial({color:0xffffff,metalness:0.5,roughness:0.4});
-var keelGroup=new THREE.Group(), frameGroup=new THREE.Group(), plateGroup=new THREE.Group(), deckGroup=new THREE.Group();
-ship.add(keelGroup,frameGroup,plateGroup,deckGroup);
-var keelMesh=null;
-function buildKeel(){
-keelGroup.clear();
-var keel=new THREE.Mesh(new THREE.BoxGeometry(12,0.35,0.6),matKeel);keel.position.y=-1.4;keelGroup.add(keel);
-var girder=new THREE.Mesh(new THREE.BoxGeometry(12,0.9,0.25),matKeel);girder.position.y=-0.85;keelGroup.add(girder);
-// Bulbous Bow - Code se bana, photo nahi
-var bulb=new THREE.Mesh(new THREE.SphereGeometry(0.55,20,20),matHull);bulb.scale.set(1.4,0.7,0.7);bulb.position.set(6.2,-1.6,0);keelGroup.add(bulb);
-var stem=new THREE.Mesh(new THREE.BoxGeometry(0.25,2.5,0.3),matHull);stem.position.set(6.1,-0.3,0);stem.rotation.z=-0.25;keelGroup.add(stem);
-}
-function buildFrames(){
-frameGroup.clear();
-for(var x=-5.5;x<=5.5;x+=0.7){
-var rib=new THREE.Mesh(new THREE.TorusGeometry(1.5,0.06,8,20,Math.PI),matFrame);
-rib.position.set(x,-1.2,0);rib.rotation.y=Math.PI/2;frameGroup.add(rib);
-var post=new THREE.Mesh(new THREE.BoxGeometry(0.08,1.6,0.08),matFrame);post.position.set(x,0,0);frameGroup.add(post);
-}
-}
-function addPlateMesh(n){
-var colors=[0x8a1a1a,0x2a5a8a,0x333333,0x8a6a2a,0x2a4a2a];
-var mat=new THREE.MeshStandardMaterial({color:colors[n-1],metalness:0.7,roughness:0.35});
-var y=-1.1+(n-1)*0.45;
-var plate=new THREE.Mesh(new THREE.BoxGeometry(11.5,0.45,0.12),mat);
-plate.position.set(0,y,1.55);plateGroup.add(plate);
-var plate2=plate.clone();plate2.position.z=-1.55;plateGroup.add(plate2);
-// Welding sparks - small glowing dots
-for(var s=0;s<8;s++){
-var sp=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),new THREE.MeshBasicMaterial({color:0xffcc00}));
-sp.position.set(-5+Math.random()*10,y+0.3,1.65);plateGroup.add(sp);
-}
-if(n==5){
-var deck=new THREE.Mesh(new THREE.BoxGeometry(11.5,0.15,3.2),matDeck);deck.position.y=1.15;deckGroup.add(deck);
-}
-}
-function buildDeckMast(){
-deckGroup.clear();plateGroup.clear();
-// Re-add plates for full view
-for(var n=1;n<=5;n++) addPlateMesh(n);
-var accom=new THREE.Mesh(new THREE.BoxGeometry(2.2,2.2,2.8),matWhite);accom.position.set(4.2,2.4,0);deckGroup.add(accom);
-for(var d=0;d<4;d++){var win=new THREE.Mesh(new THREE.BoxGeometry(2.25,0.15,2.85),new THREE.MeshBasicMaterial({color:0x00f3ff}));win.position.set(4.2,1.7+d*0.5,0);deckGroup.add(win);}
-var funnel=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,1.4,16),new THREE.MeshStandardMaterial({color:0xff4400}));funnel.position.set(3.2,3.8,0);deckGroup.add(funnel);
-var mast=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,3.5,8),matMast);mast.position.set(-4.8,2.8,0);deckGroup.add(mast);
-var mastTop=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.08,0.08),matMast);mastTop.position.set(-4.8,4.4,0);deckGroup.add(mastTop);
-var mast2=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.1,2.8,8),matMast);mast2.position.set(5.8,2.6,0);deckGroup.add(mast2);
-}
-buildKeel();
-// Drag Rotate + Pinch Zoom - Pure Code
-var dragging=false,sx=0,sy=0,rx=0.2,ry=0.6,dist=14;
-view.addEventListener('touchstart',function(e){dragging=true;sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
-view.addEventListener('touchmove',function(e){if(!dragging)return;ry+=(e.touches[0].clientX-sx)*0.01;rx-=(e.touches[0].clientY-sy)*0.01;sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});
-view.addEventListener('touchend',function(){dragging=false;});
-view.addEventListener('mousedown',function(e){dragging=true;sx=e.clientX;sy=e.clientY;});
-view.addEventListener('mousemove',function(e){if(!dragging)return;ry+=(e.clientX-sx)*0.01;rx-=(e.clientY-sy)*0.01;sx=e.clientX;sy=e.clientY;});
-view.addEventListener('mouseup',function(){dragging=false;});
-view.addEventListener('wheel',function(e){dist+=e.deltaY*0.01;if(dist<6)dist=6;if(dist>22)dist=22;e.preventDefault();},{passive:false});
-function animate(){
-requestAnimationFrame(animate);
-ship.rotation.y=ry;ship.rotation.x=rx*0.3;
-camera.position.set(Math.sin(ry)*dist,5+rx*3,Math.cos(ry)*dist);
-camera.lookAt(0,0,0);
-renderer.render(scene,camera);
-}
-animate();
-// ---------- CALCULATION + STEPS ----------
-var STEPS=[
-{cat:"STEP 1 - KEEL",t:"KEEL LAYING",d:"Keel Blocks pe Centre Girder. Ship ki reedh ki haddi.",dim:[["Keel Length","LOA ka 85%"],["Keel Height","1200 mm"],["Keel Plate","20-25 mm"]],steel:450},
-{cat:"STEP 2 - KANKAL",t:"KANKAL - FRAMES",d:"Keel pe har 800mm pe frames. Yehi kankal hai.",dim:[["Spacing","800 mm"],["Frames","~260 Nos"]],steel:3800},
-{cat:"STEP 3 - PLATES",t:"SIDE PLATES 1 BY 1",d:"Bottom → Bilge → Side → Sheer. Ek-ek plate weld.",dim:[["Bottom","20 mm"],["Bilge","16 mm"],["Side","14 mm"],["Sheer","18 mm"]],steel:9200},
-{cat:"STEP 4 - DECK + MAST",t:"DECK + MAIN MAST",d:"Deck, Accommodation, Funnel, Mast - sab code se.",dim:[["Deck","12 mm"],["Mast","28 m"]],steel:5050}
-];
-var totalSteel=18450,built=0,plates=0;
-function calcKeel(){
-var dwt=+document.getElementById('dwt').value||82000;
-var loa=+document.getElementById('loa').value||215;
-var beam=+document.getElementById('beam').value||32.2;
-var depth=+document.getElementById('depth').value||18.5;
-var steel=Math.round(dwt*0.225);totalSteel=steel;
-document.getElementById('calcRes').innerHTML='✅ <b>CODE CALCULATION</b><br>Ship: <span>'+dwt+' DWT | '+loa+'m LOA</span><br>Keel Length: <span>'+Math.round(loa*0.85)+' m</span> | Keel Height: <span>'+Math.round(800+dwt/100)+' mm</span><br>Total Steel: <span>'+steel.toLocaleString()+' Tonnes</span> | Hull: <span>'+Math.round(120+dwt/800)+' Days</span> | Total <span>~18 Months</span>';
-updateTon();
-}
-function updateTon(){
-document.getElementById('tonTxt').innerText=built.toLocaleString()+' / '+totalSteel.toLocaleString()+' Tonnes';
-var p=Math.min(100,Math.round(built/totalSteel*100));
-document.getElementById('tonBar').style.width=p+'%';
-document.getElementById('pctTxt').innerText=p+'%';
-document.getElementById('daysTxt').innerText=Math.max(0,180-Math.round(p*1.2))+' days';
-document.getElementById('plateTag').innerText='PLATE '+plates+' / 5 • '+p+'%';
-}
-function gotoStep(i,el){
-document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active')});if(el)el.classList.add('active');
-var d=STEPS[i];
-document.getElementById('detail').className='show';
-document.getElementById('dCat').innerText=d.cat;document.getElementById('dTitle').innerText=d.t;document.getElementById('dDesc').innerText=d.d;
-document.getElementById('dTable').innerHTML='<tr><th>PARAMETER</th><th>VALUE</th></tr>'+d.dim.map(function(r){return '<tr><td>'+r[0]+'</td><td><b>'+r[1]+'</b></td></tr>'}).join('');
-if(i==0){buildKeel();built=Math.max(built,450);}
-if(i==1){buildFrames();built=Math.max(built,4250);}
-if(i==3){buildDeckMast();built=Math.max(built,totalSteel);}
-updateTon();
-document.getElementById('detail').scrollIntoView({behavior:'smooth'});
-}
-function addPlate(n,btn){
-if(btn.classList.contains('on'))return;
-btn.classList.add('on');plates=n;addPlateMesh(n);built+=1850;if(built>totalSteel)built=totalSteel;updateTon();
-}
-function resetBuild(){built=0;plates=0;plateGroup.clear();deckGroup.clear();document.querySelectorAll('.plateBtns button').forEach(function(b){b.classList.remove('on')});updateTon();}
-function zoomTo(where,btn){
-document.querySelectorAll('.zoomBar button').forEach(function(b){b.classList.remove('active')});if(btn)btn.classList.add('active');
-if(where=='keel'){dist=7;rx=-0.2;ry=0.6;}
-if(where=='mid'){dist=10;rx=0.2;ry=0.6;}
-if(where=='bow'){dist=7;rx=0.1;ry=-0.6;}
-if(where=='mast'){dist=8;rx=0.5;ry=0.9;}
-if(where=='full'){dist=14;rx=0.2;ry=0.6;}
-}
-calcKeel();gotoStep(0,null);
-</script>
+            </div>
+
+            <!-- Assembly Controls -->
+            <div class="p-3 border-t border-cyan-500/30 flex gap-2">
+                <button onclick="buildAllParts()" class="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2 px-3 rounded shadow transition">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Auto Assembly
+                </button>
+                <button onclick="resetAssembly()" class="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs py-2 px-3 rounded border border-red-500/40">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- CENTER MAIN VIEW & NAVIGATION FOOTPRINT OVERLAY -->
+        <div class="flex-1 h-full relative pointer-events-none">
+            
+            <!-- Top Controls Header -->
+            <div class="absolute top-4 left-4 right-4 flex justify-between items-center pointer-events-auto">
+                
+                <!-- View Mode Selectors -->
+                <div class="glass-panel rounded-lg p-1.5 flex gap-2">
+                    <button id="mode-exterior" onclick="setViewMode('exterior')" class="px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500 text-slate-950 shadow">
+                        <i class="fa-solid fa-globe mr-1"></i> 3D Orbit View
+                    </button>
+                    <button id="mode-walk" onclick="setViewMode('walkthrough')" class="px-3 py-1.5 rounded text-xs font-semibold text-cyan-300 hover:bg-slate-800">
+                        <i class="fa-solid fa-shoe-prints mr-1"></i> Indoor Walkthrough
+                    </button>
+                    <button id="mode-holo" onclick="toggleHologramShader()" class="px-3 py-1.5 rounded text-xs font-semibold text-cyan-300 hover:bg-slate-800 border border-cyan-500/40">
+                        <i class="fa-solid fa-vr-cardboard mr-1"></i> Hologram Mode
+                    </button>
+                </div>
+
+                <!-- Camera Quick Jump Preset Nodes -->
+                <div id="walkthroughControls" class="glass-panel rounded-lg p-1.5 flex gap-2 hidden">
+                    <button onclick="teleportCamera('engineRoom')" class="px-2.5 py-1 rounded text-xs bg-slate-800 text-cyan-200 hover:bg-slate-700">
+                        <i class="fa-solid fa-fan mr-1 text-red-400"></i> Engine Room
+                    </button>
+                    <button onclick="teleportCamera('bridge')" class="px-2.5 py-1 rounded text-xs bg-slate-800 text-cyan-200 hover:bg-slate-700">
+                        <i class="fa-solid fa-compass mr-1 text-cyan-400"></i> Nav Bridge
+                    </button>
+                    <button onclick="teleportCamera('messRoom')" class="px-2.5 py-1 rounded text-xs bg-slate-800 text-cyan-200 hover:bg-slate-700">
+                        <i class="fa-solid fa-utensils mr-1 text-yellow-400"></i> Galley / Mess
+                    </button>
+                    <button onclick="teleportCamera('cargoHold')" class="px-2.5 py-1 rounded text-xs bg-slate-800 text-cyan-200 hover:bg-slate-700">
+                        <i class="fa-solid fa-box mr-1 text-green-400"></i> Cargo Tank Area
+                    </button>
+                </div>
+            </div>
+
+            <!-- Walkthrough Navigation Footprint Pins Overlay -->
+            <div id="footprintContainer" class="absolute inset-0 pointer-events-auto hidden">
+                <!-- Pins are rendered dynamically in JS -->
+            </div>
+
+        </div>
+
+        <!-- RIGHT HUD PANEL: Real-time Calculations & Engineering Data -->
+        <div class="w-80 h-full glass-panel p-4 flex flex-col justify-between pointer-events-auto border-l border-cyan-500/30">
+            <div>
+                <h2 class="text-sm font-bold text-cyan-400 uppercase tracking-wider border-b border-cyan-500/30 pb-2">
+                    <i class="fa-solid fa-calculator mr-2"></i> Dynamic Tonnage Calculator
+                </h2>
+
+                <!-- Tonnage Progress Cards -->
+                <div class="mt-4 space-y-3">
+                    <div class="bg-slate-900/80 p-3 rounded border border-slate-700">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Lightweight Tonnage (LWT):</span>
+                            <span id="lwtValue" class="font-mono font-bold text-cyan-300">12,500 T</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div id="lwtBar" class="bg-cyan-400 h-full transition-all duration-500" style="width: 25%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3 rounded border border-slate-700">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Deadweight Tonnage (DWT):</span>
+                            <span id="dwtValue" class="font-mono font-bold text-yellow-400">48,200 T</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div id="dwtBar" class="bg-yellow-400 h-full transition-all duration-500" style="width: 65%"></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/80 p-3 rounded border border-slate-700">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-gray-400">Gross Registered Tonnage (GRT):</span>
+                            <span id="grtValue" class="font-mono font-bold text-emerald-400">36,459 T</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Systems Status Matrix -->
+                <h2 class="text-sm font-bold text-cyan-400 uppercase tracking-wider border-b border-cyan-500/30 pb-2 mt-6">
+                    <i class="fa-solid fa-microchip mr-2"></i> Pipeline & Wire Matrix
+                </h2>
+                
+                <div class="mt-3 space-y-2 text-xs">
+                    <div class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                        <span class="text-amber-400"><i class="fa-solid fa-oil-can mr-2"></i> Fuel Lines:</span>
+                        <span id="status-fuel" class="font-mono text-gray-500">NOT INSTALLED</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                        <span class="text-blue-400"><i class="fa-solid fa-droplet mr-2"></i> Sea Water System:</span>
+                        <span id="status-seaWater" class="font-mono text-gray-500">NOT INSTALLED</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                        <span class="text-teal-300"><i class="fa-solid fa-glass-water mr-2"></i> Fresh Water Grid:</span>
+                        <span id="status-freshWater" class="font-mono text-gray-500">NOT INSTALLED</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-slate-900/60 p-2 rounded">
+                        <span class="text-yellow-300"><i class="fa-solid fa-bolt mr-2"></i> Main Power Cables:</span>
+                        <span id="status-electrical" class="font-mono text-gray-500">NOT INSTALLED</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Footer Specs -->
+            <div class="border-t border-cyan-500/30 pt-3 text-[11px] text-gray-400 space-y-1 font-mono">
+                <div>LOA: <span class="text-gray-200">230.5 m</span> | Beam: <span class="text-gray-200">36.6 m</span></div>
+                <div>Draft: <span class="text-gray-200">11.8 m</span> | Depth: <span class="text-gray-200">22.2 m</span></div>
+                <div class="text-cyan-400/80 mt-1">Status: Operational Holographic Twin</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MAIN 3D APPLICATION LOGIC -->
+    <script>
+        // -------------------------------------------------------------
+        // 1. GLOBAL SCENE SETUP & THREE.JS INITIALIZATION
+        // -------------------------------------------------------------
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030712, 0.003);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(120, 60, 120);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.01;
+
+        // -------------------------------------------------------------
+        // 2. LIGHTING & BLUEPRINT ENVIRONMENT
+        // -------------------------------------------------------------
+        const ambientLight = new THREE.AmbientLight(0xdbeafe, 0.6);
+        scene.add(ambientLight);
+
+        const mainDirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        mainDirLight.position.set(100, 150, 80);
+        mainDirLight.castShadow = true;
+        mainDirLight.shadow.mapSize.width = 2048;
+        mainDirLight.shadow.mapSize.height = 2048;
+        scene.add(mainDirLight);
+
+        const holoCyanLight = new THREE.PointLight(0x06b6d4, 2, 200);
+        holoCyanLight.position.set(0, 20, 0);
+        scene.add(holoCyanLight);
+
+        // Drydock Grid & Ocean Floor Matrix
+        const gridHelper = new THREE.GridHelper(300, 60, 0x06b6d4, 0x1e293b);
+        gridHelper.position.y = -0.1;
+        scene.add(gridHelper);
+
+        // Drydock Blocks
+        const drydockGroup = new THREE.Group();
+        const blockGeo = new THREE.BoxGeometry(4, 2, 4);
+        const blockMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+        for(let z = -80; z <= 80; z += 10) {
+            const block = new THREE.Mesh(blockGeo, blockMat);
+            block.position.set(0, 1, z);
+            drydockGroup.add(block);
+        }
+        scene.add(drydockGroup);
+
+        // -------------------------------------------------------------
+        // 3. SHIP CONSTRUCTION ASSEMBLY DATABASE
+        // -------------------------------------------------------------
+        const shipGroup = new THREE.Group();
+        scene.add(shipGroup);
+
+        let isHologramMode = false;
+        let installedParts = { keel: true }; // Keel is pre-installed
+        
+        // Dynamic Tonnage Tracker Base Values
+        let currentLWT = 12500;
+        let currentDWT = 48200;
+        let currentGRT = 36459;
+
+        // Standard Hologram Materials
+        const holoMatCyan = new THREE.MeshStandardMaterial({
+            color: 0x06b6d4,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.65
+        });
+
+        const solidSteelMat = new THREE.MeshStandardMaterial({
+            color: 0x475569,
+            metalness: 0.7,
+            roughness: 0.3
+        });
+
+        const hullBottomMat = new THREE.MeshStandardMaterial({
+            color: 0x991b1b, // Red Bottom Anti-fouling
+            metalness: 0.3,
+            roughness: 0.6
+        });
+
+        // Pipeline System High-Contrast Neon Materials
+        const pipelineMaterials = {
+            fuel: new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.6 }),
+            seaWater: new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8, emissiveIntensity: 0.6 }),
+            freshWater: new THREE.MeshStandardMaterial({ color: 0x14b8a6, emissive: 0x0f766e, emissiveIntensity: 0.6 }),
+            electrical: new THREE.MeshStandardMaterial({ color: 0xeab308, emissive: 0xca8a04, emissiveIntensity: 0.8 })
+        };
+
+        // -------------------------------------------------------------
+        // 4. PROCEDURAL HULL & PARTS CREATION
+        // -------------------------------------------------------------
+        const partsObjects = {};
+
+        function initBaseKeel() {
+            // Initial Keel Structure (Base Steel Frame)
+            const keelGroup = new THREE.Group();
+            const keelGeo = new THREE.BoxGeometry(14, 2, 160);
+            const keelMesh = new THREE.Mesh(keelGeo, hullBottomMat);
+            keelMesh.position.set(0, 3, 0);
+            keelGroup.add(keelMesh);
+
+            // Bow Shape Base
+            const bowGeo = new THREE.ConeGeometry(7, 30, 4);
+            const bowMesh = new THREE.Mesh(bowGeo, hullBottomMat);
+            bowMesh.rotation.x = Math.PI / 2;
+            bowMesh.rotation.z = Math.PI;
+            bowMesh.position.set(0, 3, 95);
+            keelGroup.add(bowMesh);
+
+            partsObjects['keel'] = keelGroup;
+            shipGroup.add(keelGroup);
+        }
+
+        function createDoubleBottom() {
+            const group = new THREE.Group();
+            const dbGeo = new THREE.BoxGeometry(28, 3, 140);
+            const dbMesh = new THREE.Mesh(dbGeo, solidSteelMat);
+            dbMesh.position.set(0, 5.5, -5);
+            group.add(dbMesh);
+            return group;
+        }
+
+        function createBulkheads() {
+            const group = new THREE.Group();
+            const wallGeo = new THREE.BoxGeometry(27, 18, 1);
+            for(let z = -60; z <= 50; z += 25) {
+                const bulkhead = new THREE.Mesh(wallGeo, solidSteelMat);
+                bulkhead.position.set(0, 14, z);
+                group.add(bulkhead);
+            }
+            return group;
+        }
+
+        function createSideShell() {
+            const group = new THREE.Group();
+            // Port & Starboard Hull Shell Plating
+            const sideGeo = new THREE.BoxGeometry(1, 18, 150);
+            const portSide = new THREE.Mesh(sideGeo, solidSteelMat);
+            portSide.position.set(14, 14, -5);
+            
+            const stbdSide = new THREE.Mesh(sideGeo, solidSteelMat);
+            stbdSide.position.set(-14, 14, -5);
+
+            group.add(portSide, stbdSide);
+            return group;
+        }
+
+        function createMainEngine() {
+            const group = new THREE.Group();
+            const engBlock = new THREE.Mesh(new THREE.BoxGeometry(10, 12, 18), new THREE.MeshStandardMaterial({ color: 0xd97706 }));
+            engBlock.position.set(0, 11, -50);
+            
+            // Cylinders
+            for(let i = -6; i <= 6; i += 3) {
+                const cyl = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 4), new THREE.MeshStandardMaterial({ color: 0x475569 }));
+                cyl.position.set(0, 18, -50 + i);
+                group.add(cyl);
+            }
+            group.add(engBlock);
+            return group;
+        }
+
+        function createPipingSystem(type) {
+            const group = new THREE.Group();
+            const mat = pipelineMaterials[type];
+            
+            let offsetX = type === 'fuel' ? -6 : type === 'seaWater' ? 6 : type === 'freshWater' ? -4 : 4;
+            let heightY = type === 'electrical' ? 20 : 8;
+
+            // Main Longitudinal Run
+            const mainPipeGeo = new THREE.CylinderGeometry(0.5, 0.5, 130);
+            const mainPipe = new THREE.Mesh(mainPipeGeo, mat);
+            mainPipe.rotation.x = Math.PI / 2;
+            mainPipe.position.set(offsetX, heightY, -10);
+            group.add(mainPipe);
+
+            // Distribution Risers & Branches
+            for(let z = -50; z <= 40; z += 20) {
+                const branchGeo = new THREE.CylinderGeometry(0.3, 0.3, 8);
+                const branch = new THREE.Mesh(branchGeo, mat);
+                branch.rotation.z = Math.PI / 2;
+                branch.position.set(offsetX > 0 ? offsetX - 4 : offsetX + 4, heightY, z);
+                group.add(branch);
+            }
+
+            return group;
+        }
+
+        function createSuperstructure() {
+            const group = new THREE.Group();
+            // 5 Deck Accom Block
+            const blockGeo = new THREE.BoxGeometry(24, 20, 22);
+            const block = new THREE.Mesh(blockGeo, new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.2 }));
+            block.position.set(0, 33, -50);
+            group.add(block);
+
+            // Deck Divisions Lines
+            for(let y = 28; y <= 40; y += 4) {
+                const deckLine = new THREE.Mesh(new THREE.BoxGeometry(24.4, 0.4, 22.4), new THREE.MeshStandardMaterial({ color: 0x0284c7 }));
+                deckLine.position.set(0, y, -50);
+                group.add(deckLine);
+            }
+
+            return group;
+        }
+
+        function createBridge() {
+            const group = new THREE.Group();
+            const bridgeGeo = new THREE.BoxGeometry(32, 5, 14);
+            const bridge = new THREE.Mesh(bridgeGeo, new THREE.MeshStandardMaterial({ color: 0x0f172a }));
+            bridge.position.set(0, 45.5, -50);
+            group.add(bridge);
+            return group;
+        }
+
+        // Initialize All Base Modular Assemblies
+        initBaseKeel();
+        partsObjects['doubleBottom'] = createDoubleBottom();
+        partsObjects['bulkheads'] = createBulkheads();
+        partsObjects['sideShell'] = createSideShell();
+        partsObjects['mainEngine'] = createMainEngine();
+        partsObjects['fuelLine'] = createPipingSystem('fuel');
+        partsObjects['seaWaterLine'] = createPipingSystem('seaWater');
+        partsObjects['freshWaterLine'] = createPipingSystem('freshWater');
+        partsObjects['electricalTrunk'] = createPipingSystem('electrical');
+        partsObjects['superstructure'] = createSuperstructure();
+        partsObjects['bridge'] = createBridge();
+
+        // -------------------------------------------------------------
+        // 5. INTERACTIVE INSTALLATION & ACCORDION CONTROLS
+        // -------------------------------------------------------------
+        function installPart(partKey) {
+            const btn = document.getElementById(`btn-${partKey}`);
+            
+            if (!installedParts[partKey]) {
+                installedParts[partKey] = true;
+                shipGroup.add(partsObjects[partKey]);
+                
+                // Update UI button state
+                if(btn) {
+                    btn.classList.remove('bg-slate-800/40', 'border-gray-700', 'text-gray-300');
+                    btn.classList.add('bg-cyan-950/60', 'border-cyan-500/50', 'text-cyan-200');
+                    btn.querySelector('span:last-child').innerHTML = '<i class="fa-solid fa-check text-emerald-400"></i> Active';
+                }
+
+                // Update Systems Status Text
+                if (partKey.includes('Line') || partKey === 'electricalTrunk') {
+                    const statusId = partKey.replace('Line', '').replace('Trunk', '');
+                    const statusEl = document.getElementById(`status-${statusId}`);
+                    if(statusEl) {
+                        statusEl.innerText = "ONLINE / CONNECTED";
+                        statusEl.className = "font-mono text-emerald-400 font-bold";
+                    }
+                }
+
+                // Recalculate Tonnage Metrics
+                currentLWT += 450;
+                currentDWT += 1100;
+                updateTonnageHUD();
+            }
+        }
+
+        function buildAllParts() {
+            Object.keys(partsObjects).forEach(key => installPart(key));
+        }
+
+        function resetAssembly() {
+            Object.keys(partsObjects).forEach(key => {
+                if (key !== 'keel') {
+                    shipGroup.remove(partsObjects[key]);
+                    installedParts[key] = false;
+                    const btn = document.getElementById(`btn-${key}`);
+                    if (btn) {
+                        btn.classList.remove('bg-cyan-950/60', 'border-cyan-500/50', 'text-cyan-200');
+                        btn.classList.add('bg-slate-800/40', 'border-gray-700', 'text-gray-300');
+                        btn.querySelector('span:last-child').innerText = 'Install';
+                    }
+                }
+            });
+            
+            // Reset status text
+            ['fuel', 'seaWater', 'freshWater', 'electrical'].forEach(id => {
+                const statusEl = document.getElementById(`status-${id}`);
+                if(statusEl) {
+                    statusEl.innerText = "NOT INSTALLED";
+                    statusEl.className = "font-mono text-gray-500";
+                }
+            });
+
+            currentLWT = 12500;
+            currentDWT = 48200;
+            updateTonnageHUD();
+        }
+
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('hidden');
+        }
+
+        function updateTonnageHUD() {
+            document.getElementById('lwtValue').innerText = currentLWT.toLocaleString() + " T";
+            document.getElementById('dwtValue').innerText = currentDWT.toLocaleString() + " T";
+        }
+
+        // -------------------------------------------------------------
+        // 6. HOLOGRAM & CAMERA VIEW MODE CONTROLLERS
+        // -------------------------------------------------------------
+        function toggleHologramShader() {
+            isHologramMode = !isHologramMode;
+            shipGroup.traverse((child) => {
+                if (child.isMesh && child.material !== hullBottomMat) {
+                    child.material = isHologramMode ? holoMatCyan : solidSteelMat;
+                }
+            });
+        }
+
+        function setViewMode(mode) {
+            const btnExt = document.getElementById('mode-exterior');
+            const btnWalk = document.getElementById('mode-walk');
+            const walkCtrls = document.getElementById('walkthroughControls');
+            const footprintContainer = document.getElementById('footprintContainer');
+
+            if (mode === 'walkthrough') {
+                btnWalk.className = "px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500 text-slate-950 shadow";
+                btnExt.className = "px-3 py-1.5 rounded text-xs font-semibold text-cyan-300 hover:bg-slate-800";
+                walkCtrls.classList.remove('hidden');
+                footprintContainer.classList.remove('hidden');
+
+                // Teleport camera inside engine room by default
+                teleportCamera('engineRoom');
+            } else {
+                btnExt.className = "px-3 py-1.5 rounded text-xs font-semibold bg-cyan-500 text-slate-950 shadow";
+                btnWalk.className = "px-3 py-1.5 rounded text-xs font-semibold text-cyan-300 hover:bg-slate-800";
+                walkCtrls.classList.add('hidden');
+                footprintContainer.classList.add('hidden');
+
+                // Reset to external Orbit camera
+                controls.target.set(0, 15, 0);
+                camera.position.set(120, 60, 120);
+            }
+        }
+
+        function teleportCamera(locationKey) {
+            const targets = {
+                engineRoom: { cam: [0, 14, -40], lookAt: [0, 12, -50] },
+                bridge: { cam: [0, 46.5, -46], lookAt: [0, 46.5, -60] },
+                messRoom: { cam: [2, 28.5, -48], lookAt: [5, 28.5, -52] },
+                cargoHold: { cam: [0, 18, 20], lookAt: [0, 10, 40] }
+            };
+
+            const target = targets[locationKey];
+            if (target) {
+                // Smooth Camera Glide Transition
+                gsapCameraMove(target.cam, target.lookAt);
+            }
+        }
+
+        function gsapCameraMove(targetPos, targetLook) {
+            let frames = 0;
+            const maxFrames = 40;
+            const startPos = camera.position.clone();
+            const startTarget = controls.target.clone();
+            
+            const endPos = new THREE.Vector3(...targetPos);
+            const endTarget = new THREE.Vector3(...targetLook);
+
+            function animateTransition() {
+                frames++;
+                const progress = frames / maxFrames;
+                
+                camera.position.lerpVectors(startPos, endPos, progress);
+                controls.target.lerpVectors(startTarget, endTarget, progress);
+                controls.update();
+
+                if (frames < maxFrames) {
+                    requestAnimationFrame(animateTransition);
+                }
+            }
+            animateTransition();
+        }
+
+        function changeShipType(type) {
+            // Recalculate vessel specs dynamically based on vessel class selection
+            if (type === 'LPG') {
+                currentGRT = 36459;
+            } else if (type === 'CONTAINER') {
+                currentGRT = 140500;
+            } else if (type === 'TANKER') {
+                currentGRT = 81200;
+            } else {
+                currentGRT = 93000;
+            }
+            document.getElementById('grtValue').innerText = currentGRT.toLocaleString() + " T";
+        }
+
+        // -------------------------------------------------------------
+        // 7. ANIMATION LOOP & RESIZE HANDLER
+        // -------------------------------------------------------------
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Continuous Hologram Oscillation
+            if (isHologramMode) {
+                holoCyanLight.intensity = 1.5 + Math.sin(Date.now() * 0.005) * 0.5;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Start 3D Engine Loop
+        animate();
+
+    </script>
 </body>
 </html>
