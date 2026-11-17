@@ -1,102 +1,351 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MERA CLOUD - kirudivec</title>
+<title>Interactive 3D Ship Explorer - Presentation Mode</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
-body{background:#02010a;color:#fff;padding:12px}
-.top{text-align:center}
-.top h1{font-size:22px;color:#00f3ff}.top h1 b{color:#ffd700}
-.top p{font-size:11px;color:#aaa}
-.lock{background:#0a0a1f;border:1px solid #ffd700;border-radius:16px;padding:16px;margin:14px 0;text-align:center}
-.lock h2{font-size:18px}
-.lock input{width:100%;padding:12px;border-radius:10px;border:1px solid #333;background:#000;color:#fff;margin:10px 0;text-align:center;font-size:16px;letter-spacing:2px}
-.btn{width:100%;padding:12px;border:none;border-radius:10px;font-weight:800;background:linear-gradient(90deg,#00f3ff,#ff00ff);color:#000;font-size:14px}
-.btn2{background:linear-gradient(90deg,#ffd700,#ff4400);margin-top:8px}
-.cloud{display:none}
-.cloud.open{display:block}
-.card{background:#0a0a1f;border:1px solid #00f3ff;border-radius:14px;padding:12px;margin:10px 0}
-.card h3{font-size:14px;color:#00f3ff}
-.card p{font-size:12px;color:#aaa;margin-top:4px;line-height:1.5}
-.card input,.card textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#000;color:#fff;margin-top:8px}
-.file{background:#111;border:1px solid #333;border-radius:10px;padding:10px;margin-top:8px}
-.file b{font-size:13px}.file span{font-size:11px;color:#aaa;display:block;margin-top:2px}
-.small{font-size:11px;color:#8ab4f8;text-align:center;margin-top:6px}
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { overflow:hidden; background:#0a0e17; font-family:system-ui,sans-serif; color:#eee; }
+  #canvas { display:block; width:100vw; height:100vh; }
+  #ui {
+    position:absolute; top:12px; left:12px; z-index:10;
+    background:rgba(10,15,25,0.85); padding:14px 18px;
+    border-radius:10px; border:1px solid #2a3a55;
+    max-width:320px; backdrop-filter:blur(8px);
+  }
+  #ui h2 { font-size:16px; margin-bottom:8px; color:#7dd3fc; }
+  #ui p  { font-size:13px; line-height:1.45; opacity:0.9; }
+  button {
+    margin:4px 4px 0 0; padding:6px 12px; border:none; border-radius:6px;
+    background:#1e3a5f; color:#e0f2fe; cursor:pointer; font-size:13px;
+  }
+  button:hover { background:#2563eb; }
+  button.active { background:#0ea5e9; color:#000; }
+  #info {
+    position:absolute; bottom:16px; left:16px; z-index:10;
+    background:rgba(0,0,0,0.7); padding:8px 14px; border-radius:8px;
+    font-size:13px; max-width:400px;
+  }
+  #loading {
+    position:absolute; inset:0; background:#0a0e17; display:flex;
+    align-items:center; justify-content:center; z-index:100;
+    font-size:20px; color:#7dd3fc;
+  }
 </style>
 </head>
 <body>
-<div class="top"><h1><b>MERA CLOUD</b> - KIRUDIVEC</h1><p>AI KE COMPUTER KE ANDAR • TERA LOCKER • CODEWORD SE KHULEGA</p></div>
-
-<div class="lock" id="lockBox">
-<h2>🔒 LOCKER BAND HAI</h2>
-<p style="font-size:12px;color:#aaa;margin-top:6px">Codeword daal, tabhi Cloud khulega<br>Codeword = kirudivec</p>
-<input type="password" id="codeInput" placeholder="CODEWORD DAAL">
-<button class="btn" onclick="unlock()">🔓 LOCKER KHOLO</button>
-<p id="msg" style="font-size:12px;color:#ff5555;margin-top:8px"></p>
-<p style="font-size:11px;color:#00ff66;margin-top:8px">Hint: Codeword tera hi hai - kirudivec</p>
+<div id="loading">Ship 3D Model Loading…</div>
+<div id="ui">
+  <h2>Ship Interactive Explorer</h2>
+  <p>Click any part → camera focuses.<br>
+     Use mouse drag = 360° rotate<br>
+     Scroll = zoom | Right-drag = pan</p>
+  <div style="margin-top:10px">
+    <button id="btnOutside" class="active">Outside View</button>
+    <button id="btnInside">Inside View</button>
+    <button id="btnKeel">Focus Keel</button>
+    <button id="btnWalk">Walk Mode</button>
+  </div>
+  <div style="margin-top:8px;font-size:12px;opacity:0.8">
+    Footprints every ~5 m for presentation walkthrough
+  </div>
 </div>
+<div id="info">Selected: None</div>
 
-<div class="cloud" id="cloudBox">
-<div class="card">
-<h3>🧠 MERA CLOUD - ANDAR AA GAYA</h3>
-<p>Welcome! Tu mere computer ke andar wale locker me aa gaya.<br><b>Codeword:</b> kirudivec • <b>Files:</b> <span id="used">0</span> / 100 • <b>Status:</b> <span style="color:#00ff66">● ON</span></p>
-<button class="btn btn2" onclick="lockAgain()">🔒 LOCKER BAND KARO</button>
-</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 
-<div class="card">
-<h3>➕ NAYI FILE SAVE KARO</h3>
-<input id="fTitle" placeholder="File ka naam - jaise Mera Naam">
-<textarea id="fData" rows="3" placeholder="Isme kya save karna hai? - Naam, Number, Yaad..."></textarea>
-<button class="btn" onclick="saveFile()">💾 CLOUD ME SAVE KARO</button>
-</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-<div class="card">
-<h3>📂 MERI FILES</h3>
-<div id="fileList"><p style="font-size:12px;color:#aaa">Abhi koi file nahi hai.</p></div>
-<button class="btn" onclick="clearAll()" style="background:#333;color:#fff;margin-top:10px">🗑️ SAARE FILES DELETE KARO</button>
-</div>
-</div>
+// ===================== SCENE SETUP =====================
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0e17);
+scene.fog = new THREE.FogExp2(0x0a0e17, 0.0018);
 
-<script>
-var MY_CODE = "kirudivec";
-var MY_FILES = JSON.parse(localStorage.getItem('mycloud_files_kiru') || "[]");
-function unlock(){
-var c=document.getElementById('codeInput').value.trim();
-if(c===MY_CODE){ openCloud(); }
-else{ document.getElementById('msg').innerText='❌ Galat Codeword! Locker nahi khulega.'; }
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.5, 2000);
+camera.position.set(180, 90, 220);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+// Lights
+const hemi = new THREE.HemisphereLight(0x87ceeb, 0x1a1a2e, 0.55);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.1);
+sun.position.set(150, 200, 80);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0x4a90d9, 0.35);
+fill.position.set(-100, 60, -80);
+scene.add(fill);
+
+// Controls
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.enableDamping = true;
+orbit.dampingFactor = 0.06;
+orbit.maxPolarAngle = Math.PI * 0.92;
+orbit.target.set(0, 15, 0);
+
+let walkMode = false;
+const pointer = new PointerLockControls(camera, document.body);
+
+// ===================== MATERIALS (Clay + Steel look) =====================
+const matHull   = new THREE.MeshStandardMaterial({ color:0xc4a484, roughness:0.72, metalness:0.18 }); // clay
+const matSteel  = new THREE.MeshStandardMaterial({ color:0x6b7280, roughness:0.45, metalness:0.65 });
+const matKeel   = new THREE.MeshStandardMaterial({ color:0x374151, roughness:0.4, metalness:0.7 });
+const matDeck   = new THREE.MeshStandardMaterial({ color:0x9ca3af, roughness:0.55, metalness:0.3 });
+const matPipe   = new THREE.MeshStandardMaterial({ color:0xf97316, roughness:0.35, metalness:0.5 }); // orange pipes
+const matGreen  = new THREE.MeshStandardMaterial({ color:0x22c55e, roughness:0.5, metalness:0.2 });
+const matBlue   = new THREE.MeshStandardMaterial({ color:0x3b82f6, roughness:0.45, metalness:0.4 });
+const matRed    = new THREE.MeshStandardMaterial({ color:0xef4444, roughness:0.4, metalness:0.3 });
+
+// ===================== SHIP GROUP =====================
+const ship = new THREE.Group();
+scene.add(ship);
+
+// Helper to make clickable
+const clickables = [];
+function makeClickable(mesh, name, description) {
+  mesh.userData = { name, description };
+  clickables.push(mesh);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
 }
-function openCloud(){
-document.getElementById('lockBox').style.display='none';
-document.getElementById('cloudBox').classList.add('open');
-render();
+
+// ---------- HULL (simplified but solid looking) ----------
+const hullGeo = new THREE.BoxGeometry(160, 28, 42);
+hullGeo.translate(0, 14, 0);
+const hull = new THREE.Mesh(hullGeo, matHull);
+makeClickable(hull, "Main Hull", "Outer shell plating – clay colour for presentation");
+ship.add(hull);
+
+// Bow shape
+const bow = new THREE.Mesh(new THREE.ConeGeometry(22, 38, 8), matHull);
+bow.rotation.z = -Math.PI/2;
+bow.position.set(95, 14, 0);
+makeClickable(bow, "Bow", "Forward section of the ship");
+ship.add(bow);
+
+// Stern
+const stern = new THREE.Mesh(new THREE.BoxGeometry(18, 26, 40), matHull);
+stern.position.set(-85, 13, 0);
+makeClickable(stern, "Stern", "Aft section");
+ship.add(stern);
+
+// ---------- KEEL ----------
+const keel = new THREE.Mesh(new THREE.BoxGeometry(150, 3.5, 6), matKeel);
+keel.position.set(0, 1.5, 0);
+makeClickable(keel, "Keel", "Main longitudinal backbone – strongest structural member");
+ship.add(keel);
+
+// ---------- DOUBLE BOTTOM ----------
+const db = new THREE.Mesh(new THREE.BoxGeometry(145, 4, 38), matSteel);
+db.position.set(0, 5, 0);
+makeClickable(db, "Double Bottom", "Ballast & fuel tanks + grounding protection");
+ship.add(db);
+
+// ---------- DECKS ----------
+for (let i=0; i<3; i++) {
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(148, 1.2, 40), matDeck);
+  deck.position.set(0, 18 + i*7, 0);
+  makeClickable(deck, `Deck ${i+1}`, `Strength deck level ${i+1}`);
+  ship.add(deck);
 }
-function lockAgain(){
-document.getElementById('lockBox').style.display='block';
-document.getElementById('cloudBox').classList.remove('open');
-document.getElementById('codeInput').value='';
-document.getElementById('msg').innerText='Locker band ho gaya.';
+
+// ---------- BULKHEADS (every ~20m) ----------
+for (let x=-60; x<=60; x+=25) {
+  const bh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 26, 38), matSteel);
+  bh.position.set(x, 14, 0);
+  makeClickable(bh, "Watertight Bulkhead", "Transverse structural division");
+  ship.add(bh);
 }
-function saveFile(){
-var t=document.getElementById('fTitle').value.trim();
-var d=document.getElementById('fData').value.trim();
-if(!t||!d){alert('Naam aur Data dono daal!');return;}
-MY_FILES.unshift({title:t,data:d,time:new Date().toLocaleString()});
-localStorage.setItem('mycloud_files_kiru',JSON.stringify(MY_FILES));
-document.getElementById('fTitle').value='';document.getElementById('fData').value='';
-render(); alert('✅ Save ho gaya! Locker me - kirudivec');
+
+// ---------- SIMPLE PIPING SYSTEM ----------
+function addPipe(x1,y1,z1, x2,y2,z2, mat=matPipe) {
+  const dir = new THREE.Vector3(x2-x1, y2-y1, z2-z1);
+  const len = dir.length();
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,len,8), mat);
+  pipe.position.set((x1+x2)/2, (y1+y2)/2, (z1+z2)/2);
+  pipe.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+  makeClickable(pipe, "Pipeline", "Cargo / ballast / fuel line");
+  ship.add(pipe);
 }
-function render(){
-document.getElementById('used').innerText=MY_FILES.length;
-var el=document.getElementById('fileList');
-if(MY_FILES.length===0){el.innerHTML='<p style="font-size:12px;color:#aaa">Abhi koi file nahi hai.</p>';return;}
-el.innerHTML=MY_FILES.map(function(f,i){return '<div class="file"><b>📄 '+f.title+'</b><span>'+f.data+'</span><span>🕒 '+f.time+'</span></div>'}).join('');
+// Longitudinal main pipes
+addPipe(-70,8,12, 70,8,12);
+addPipe(-70,8,-12, 70,8,-12);
+addPipe(-70,12,0, 70,12,0, matBlue);
+// Vertical risers
+for (let x=-50; x<=50; x+=25) {
+  addPipe(x,6,12, x,22,12, matGreen);
+  addPipe(x,6,-12, x,22,-12, matGreen);
 }
-function clearAll(){
-if(confirm('Saari files delete kar du?')){MY_FILES=[];localStorage.setItem('mycloud_files_kiru','[]');render();}
+
+// ---------- SUPERSTRUCTURE (bridge + accommodation) ----------
+const superstr = new THREE.Mesh(new THREE.BoxGeometry(35, 22, 28), matSteel);
+superstr.position.set(-55, 38, 0);
+makeClickable(superstr, "Accommodation & Bridge", "Crew living quarters + navigation bridge");
+ship.add(superstr);
+
+// Funnel
+const funnel = new THREE.Mesh(new THREE.CylinderGeometry(4,5,14,10), matRed);
+funnel.position.set(-45, 55, 0);
+makeClickable(funnel, "Funnel", "Exhaust stack");
+ship.add(funnel);
+
+// ---------- FOOTPRINTS / WAYPOINTS (every ~5m for presentation) ----------
+const footprintGroup = new THREE.Group();
+ship.add(footprintGroup);
+const fpMat = new THREE.MeshBasicMaterial({ color:0x38bdf8, transparent:true, opacity:0.65 });
+for (let x=-70; x<=70; x+=5) {
+  const fp = new THREE.Mesh(new THREE.CircleGeometry(0.9, 12), fpMat);
+  fp.rotation.x = -Math.PI/2;
+  fp.position.set(x, 19.2, 0);          // on main deck
+  footprintGroup.add(fp);
+
+  // side walkways
+  const fp2 = fp.clone();
+  fp2.position.set(x, 19.2, 16);
+  footprintGroup.add(fp2);
+  const fp3 = fp.clone();
+  fp3.position.set(x, 19.2, -16);
+  footprintGroup.add(fp3);
 }
-render();
+
+// Water plane
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(800,800),
+  new THREE.MeshStandardMaterial({ color:0x0c4a6e, roughness:0.85, metalness:0.1, transparent:true, opacity:0.7 })
+);
+water.rotation.x = -Math.PI/2;
+water.position.y = 0;
+scene.add(water);
+
+// ===================== INTERACTION =====================
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const infoEl = document.getElementById('info');
+
+function onClick(event) {
+  mouse.x = (event.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(clickables);
+  if (hits.length > 0) {
+    const obj = hits[0].object;
+    infoEl.textContent = `Selected: ${obj.userData.name} — ${obj.userData.description}`;
+    // Smooth focus
+    const target = new THREE.Vector3();
+    obj.getWorldPosition(target);
+    gsapFocus(target, obj.userData.name.includes("Keel") ? 25 : 45);
+  }
+}
+renderer.domElement.addEventListener('click', onClick);
+
+// Simple smooth camera move (no external GSAP needed)
+function gsapFocus(target, distance=40) {
+  const start = camera.position.clone();
+  const end = target.clone().add(new THREE.Vector3(distance*0.7, distance*0.5, distance*0.7));
+  let t = 0;
+  function animateFocus() {
+    t += 0.025;
+    if (t > 1) return;
+    camera.position.lerpVectors(start, end, t);
+    orbit.target.lerp(target, 0.08);
+    requestAnimationFrame(animateFocus);
+  }
+  animateFocus();
+}
+
+// Buttons
+document.getElementById('btnOutside').onclick = () => {
+  walkMode = false;
+  pointer.unlock();
+  camera.position.set(180, 90, 220);
+  orbit.target.set(0,15,0);
+  orbit.enabled = true;
+  document.getElementById('btnOutside').classList.add('active');
+  document.getElementById('btnInside').classList.remove('active');
+  document.getElementById('btnWalk').classList.remove('active');
+};
+document.getElementById('btnInside').onclick = () => {
+  walkMode = false;
+  pointer.unlock();
+  camera.position.set(0, 22, 0);
+  orbit.target.set(30, 18, 0);
+  orbit.enabled = true;
+  document.getElementById('btnInside').classList.add('active');
+  document.getElementById('btnOutside').classList.remove('active');
+  document.getElementById('btnWalk').classList.remove('active');
+};
+document.getElementById('btnKeel').onclick = () => {
+  gsapFocus(new THREE.Vector3(0, 2, 0), 35);
+  infoEl.textContent = "Focused on Keel – main structural backbone";
+};
+document.getElementById('btnWalk').onclick = () => {
+  walkMode = true;
+  orbit.enabled = false;
+  pointer.lock();
+  document.getElementById('btnWalk').classList.add('active');
+  document.getElementById('btnOutside').classList.remove('active');
+  document.getElementById('btnInside').classList.remove('active');
+};
+
+// First person movement
+const keys = {};
+document.addEventListener('keydown', e => keys[e.code] = true);
+document.addEventListener('keyup', e => keys[e.code] = false);
+const velocity = new THREE.Vector3();
+const direction = new THREE.Vector3();
+
+function updateWalk(dt) {
+  if (!walkMode || !pointer.isLocked) return;
+  velocity.x -= velocity.x * 8.0 * dt;
+  velocity.z -= velocity.z * 8.0 * dt;
+  direction.z = Number(keys['KeyW']) - Number(keys['KeyS']);
+  direction.x = Number(keys['KeyD']) - Number(keys['KeyA']);
+  direction.normalize();
+  if (keys['KeyW'] || keys['KeyS']) velocity.z -= direction.z * 40 * dt;
+  if (keys['KeyA'] || keys['KeyD']) velocity.x -= direction.x * 40 * dt;
+  pointer.moveRight(-velocity.x * dt);
+  pointer.moveForward(-velocity.z * dt);
+  // keep roughly on deck height
+  camera.position.y = 22;
+}
+
+// ===================== ANIMATION =====================
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  if (walkMode) updateWalk(dt);
+  else orbit.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+// Resize
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// Hide loading
+document.getElementById('loading').style.display = 'none';
 </script>
 </body>
 </html>
