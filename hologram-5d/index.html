@@ -2,52 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clean Professional Ship 3D Viewer</title>
+<title>Real Ship GLTF Viewer</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { overflow:hidden; background:#020617; font-family:system-ui,sans-serif; color:#e2e8f0; }
-  #c { display:block; width:100vw; height:100vh; }
+  body { overflow:hidden; background:#0b1220; font-family:system-ui,sans-serif; color:#e2e8f0; }
+  #c { width:100vw; height:100vh; display:block; }
   #ui {
     position:absolute; top:14px; left:14px; z-index:20;
     background:rgba(15,23,42,0.92); border:1px solid #334155;
-    padding:14px 16px; border-radius:10px; width:280px;
-    backdrop-filter:blur(8px);
+    padding:14px 16px; border-radius:10px; width:300px;
   }
   #ui h2 { font-size:15px; color:#38bdf8; margin-bottom:6px; }
-  #ui p { font-size:12px; line-height:1.4; opacity:0.85; margin-bottom:10px; }
+  #ui p { font-size:12px; opacity:0.85; margin-bottom:10px; line-height:1.4; }
   button {
     margin:3px 3px 0 0; padding:6px 11px; border:none; border-radius:6px;
     background:#1e293b; color:#e2e8f0; cursor:pointer; font-size:12px;
   }
   button:hover { background:#0ea5e9; color:#000; }
-  button.active { background:#0ea5e9; color:#000; font-weight:600; }
-  #info {
+  #status {
     position:absolute; bottom:16px; left:16px; z-index:20;
     background:rgba(0,0,0,0.75); padding:8px 14px; border-radius:8px;
-    font-size:13px; max-width:420px;
+    font-size:13px;
   }
   #loading {
-    position:absolute; inset:0; background:#020617; display:flex;
+    position:absolute; inset:0; background:#0b1220; display:flex;
     align-items:center; justify-content:center; z-index:50;
     font-size:18px; color:#38bdf8;
   }
 </style>
 </head>
 <body>
-<div id="loading">Loading clean ship model…</div>
+<div id="loading">Loading real ship model…</div>
 <div id="ui">
-  <h2>Professional Ship Viewer</h2>
-  <p>Drag = rotate • Scroll = zoom (limited)<br>
-     Click part = focus • Clean blueprint style available</p>
-  <div>
-    <button id="btnSolid" class="active">Solid</button>
-    <button id="btnBlueprint">Blueprint</button>
-    <button id="btnTop">Top View</button>
-    <button id="btnSide">Side View</button>
-    <button id="btnReset">Reset</button>
-  </div>
+  <h2>Real Ship GLTF Viewer</h2>
+  <p>High-detail model load ho raha hai.<br>
+     Mouse se ghumao, scroll se zoom.<br>
+     Model file ka naam <b>ship.glb</b> hona chahiye.</p>
+  <button onclick="resetCamera()">Reset Camera</button>
 </div>
-<div id="info">Click any part of the ship</div>
+<div id="status">Model loading...</div>
 
 <script type="importmap">
 {
@@ -61,223 +54,106 @@
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020617);
+scene.background = new THREE.Color(0x0b1220);
+scene.fog = new THREE.FogExp2(0x0b1220, 0.0008);
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 1, 3000);
-camera.position.set(220, 110, 260);
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.5, 5000);
+camera.position.set(180, 80, 220);
 
-const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
-// Soft lighting
-const hemi = new THREE.HemisphereLight(0x93c5fd, 0x0f172a, 0.55);
+// Lights
+const hemi = new THREE.HemisphereLight(0xb1e1ff, 0x0f172a, 0.55);
 scene.add(hemi);
-const dir = new THREE.DirectionalLight(0xffffff, 1.05);
-dir.position.set(120, 180, 90);
-dir.castShadow = true;
-scene.add(dir);
-const fill = new THREE.DirectionalLight(0x38bdf8, 0.25);
-fill.position.set(-80, 60, -100);
+
+const sun = new THREE.DirectionalLight(0xfff5e0, 1.4);
+sun.position.set(100, 120, 60);
+sun.castShadow = true;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0x93c5fd, 0.35);
+fill.position.set(-80, 40, -60);
 scene.add(fill);
 
-// Controls – zoom limited
+// Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 80;      // zoom in limit
-controls.maxDistance = 450;     // zoom out limit
-controls.maxPolarAngle = Math.PI * 0.85;
-controls.target.set(0, 18, 0);
+controls.dampingFactor = 0.06;
+controls.minDistance = 30;
+controls.maxDistance = 800;
+controls.target.set(0, 15, 0);
 
-// ========== MATERIALS ==========
-const matHull = new THREE.MeshStandardMaterial({
-  color: 0xb0c4de, roughness: 0.55, metalness: 0.35
+// Water plane
+const waterGeo = new THREE.PlaneGeometry(2000, 2000);
+const waterMat = new THREE.MeshStandardMaterial({
+  color: 0x0c4a6e,
+  roughness: 0.85,
+  metalness: 0.1,
+  transparent: true,
+  opacity: 0.75
 });
-const matDeck = new THREE.MeshStandardMaterial({
-  color: 0x64748b, roughness: 0.7, metalness: 0.2
-});
-const matIsland = new THREE.MeshStandardMaterial({
-  color: 0x94a3b8, roughness: 0.45, metalness: 0.4
-});
-const matAccent = new THREE.MeshStandardMaterial({
-  color: 0x38bdf8, roughness: 0.3, metalness: 0.6
-});
-
-// Blueprint materials
-const bpMat = new THREE.MeshBasicMaterial({
-  color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.85
-});
-const bpSolid = new THREE.MeshBasicMaterial({
-  color: 0x0ea5e9, transparent: true, opacity: 0.15
-});
-
-// ========== SHIP CONSTRUCTION ==========
-const ship = new THREE.Group();
-scene.add(ship);
-const clickables = [];
-
-function addPart(mesh, name, desc) {
-  mesh.userData = { name, desc };
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  clickables.push(mesh);
-  ship.add(mesh);
-  return mesh;
-}
-
-// Main Hull (longer & cleaner proportions)
-const hull = new THREE.Mesh(
-  new THREE.BoxGeometry(220, 22, 48),
-  matHull
-);
-hull.position.y = 11;
-addPart(hull, "Main Hull", "Primary structural hull");
-
-// Bow (tapered)
-const bow = new THREE.Mesh(
-  new THREE.CylinderGeometry(2, 24, 55, 8, 1, false),
-  matHull
-);
-bow.rotation.z = Math.PI / 2;
-bow.position.set(132, 11, 0);
-addPart(bow, "Bow", "Forward tapered section");
-
-// Stern
-const stern = new THREE.Mesh(
-  new THREE.BoxGeometry(28, 20, 46),
-  matHull
-);
-stern.position.set(-118, 10, 0);
-addPart(stern, "Stern", "Aft section");
-
-// Flight deck / main deck
-const deck = new THREE.Mesh(
-  new THREE.BoxGeometry(210, 1.8, 52),
-  matDeck
-);
-deck.position.set(5, 23, 0);
-addPart(deck, "Flight / Main Deck", "Primary working deck");
-
-// Island superstructure (carrier style)
-const island = new THREE.Mesh(
-  new THREE.BoxGeometry(38, 32, 22),
-  matIsland
-);
-island.position.set(-35, 40, 18);
-addPart(island, "Island Superstructure", "Bridge, radar & control tower");
-
-// Funnel / mast group
-const funnel = new THREE.Mesh(
-  new THREE.CylinderGeometry(4.5, 5.5, 18, 10),
-  matAccent
-);
-funnel.position.set(-30, 58, 18);
-addPart(funnel, "Funnel & Mast", "Exhaust and sensor mast");
-
-// Simple hangar / lower deck indication
-const lower = new THREE.Mesh(
-  new THREE.BoxGeometry(160, 8, 40),
-  matDeck
-);
-lower.position.set(10, 6, 0);
-addPart(lower, "Lower Decks / Hangar", "Internal decks and spaces");
-
-// Keel line (visual)
-const keel = new THREE.Mesh(
-  new THREE.BoxGeometry(200, 2.2, 5),
-  new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.3 })
-);
-keel.position.set(0, 1.2, 0);
-addPart(keel, "Keel", "Main longitudinal structural backbone");
-
-// Water
-const water = new THREE.Mesh(
-  new THREE.PlaneGeometry(1200, 1200),
-  new THREE.MeshStandardMaterial({
-    color: 0x0c4a6e, roughness: 0.85, metalness: 0.1,
-    transparent: true, opacity: 0.65
-  })
-);
+const water = new THREE.Mesh(waterGeo, waterMat);
 water.rotation.x = -Math.PI / 2;
+water.position.y = 0;
 scene.add(water);
 
-// ========== INTERACTION ==========
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-const info = document.getElementById('info');
+// ========== LOAD REAL MODEL ==========
+const loader = new GLTFLoader();
+const status = document.getElementById('status');
+const loading = document.getElementById('loading');
 
-function focusOn(obj) {
-  const pos = new THREE.Vector3();
-  obj.getWorldPosition(pos);
-  const start = camera.position.clone();
-  const end = pos.clone().add(new THREE.Vector3(70, 40, 70));
-  let t = 0;
-  function anim() {
-    t += 0.03;
-    if (t > 1) return;
-    camera.position.lerpVectors(start, end, t);
-    controls.target.lerp(pos, 0.1);
-    requestAnimationFrame(anim);
+loader.load(
+  './ship.glb',                    // <-- yahi file name hona chahiye
+  (gltf) => {
+    const model = gltf.scene;
+    
+    // Scale adjust (agar model bahut bada/chhota ho)
+    model.scale.set(1, 1, 1);
+    
+    // Center the model
+    const box = new THREE.Box3().setFromObject(model);
+    const center = box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    model.position.y = -box.min.y;   // keels on water
+    
+    scene.add(model);
+    
+    // Auto frame camera
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    camera.position.set(maxDim * 1.2, maxDim * 0.5, maxDim * 1.4);
+    controls.target.set(0, size.y * 0.3, 0);
+    controls.update();
+    
+    status.textContent = "Model loaded successfully ✓";
+    loading.style.display = 'none';
+  },
+  (xhr) => {
+    const pct = xhr.total ? Math.round((xhr.loaded / xhr.total) * 100) : 0;
+    status.textContent = `Loading... ${pct}%`;
+  },
+  (error) => {
+    console.error(error);
+    status.textContent = "Error: ship.glb nahi mili. File same folder mein rakho.";
+    loading.innerHTML = "ship.glb file nahi mili.<br>Download karke same folder mein rakho.";
   }
-  anim();
-}
+);
 
-renderer.domElement.addEventListener('click', (e) => {
-  mouse.x = (e.clientX / innerWidth) * 2 - 1;
-  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
-  raycaster.setFromCamera(mouse, camera);
-  const hits = raycaster.intersectObjects(clickables);
-  if (hits.length) {
-    const o = hits[0].object;
-    info.textContent = `${o.userData.name} — ${o.userData.desc}`;
-    focusOn(o);
-  }
-});
-
-// Buttons
-let blueprintMode = false;
-document.getElementById('btnSolid').onclick = () => {
-  blueprintMode = false;
-  ship.traverse(c => {
-    if (c.isMesh && c.userData.name) {
-      if (c.userData.name.includes("Deck")) c.material = matDeck;
-      else if (c.userData.name.includes("Island") || c.userData.name.includes("Funnel")) c.material = matIsland;
-      else if (c.userData.name.includes("Keel")) c.material = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7 });
-      else c.material = matHull;
-    }
-  });
-  document.getElementById('btnSolid').classList.add('active');
-  document.getElementById('btnBlueprint').classList.remove('active');
-};
-document.getElementById('btnBlueprint').onclick = () => {
-  blueprintMode = true;
-  ship.traverse(c => {
-    if (c.isMesh && c.userData.name) {
-      c.material = bpMat;
-    }
-  });
-  document.getElementById('btnBlueprint').classList.add('active');
-  document.getElementById('btnSolid').classList.remove('active');
-};
-document.getElementById('btnTop').onclick = () => {
-  camera.position.set(0, 280, 0.1);
-  controls.target.set(0, 0, 0);
-};
-document.getElementById('btnSide').onclick = () => {
-  camera.position.set(0, 40, 320);
-  controls.target.set(0, 20, 0);
-};
-document.getElementById('btnReset').onclick = () => {
-  camera.position.set(220, 110, 260);
-  controls.target.set(0, 18, 0);
+window.resetCamera = function() {
+  camera.position.set(180, 80, 220);
+  controls.target.set(0, 15, 0);
 };
 
-// Animation loop
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
@@ -290,8 +166,6 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
-
-document.getElementById('loading').style.display = 'none';
 </script>
 </body>
 </html>
